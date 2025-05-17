@@ -24,7 +24,7 @@ ul {
 /* En-tête */
 header {
     background-color: #fff;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 10px rgba(113, 42, 42, 0.1);
     padding: 1rem 2rem;
     display: flex;
     justify-content: space-between;
@@ -39,35 +39,73 @@ header {
     font-size: 1.8rem;
 }
 
-nav ul {
-    display: flex;
-    gap: 2rem;
-}
 
-nav a {
-    color: #555;
-    font-weight: 500;
-    transition: color 0.3s;
-}
-
-nav a:hover {
-    color: #3498db;
-}
-
-/* Section héro */
+/* Section héro 
 .hero {
     height: 80vh;
-    background: linear-gradient(135deg, #3498db, #8e44ad);
+    background-color:black;
     color: white;
     display: flex;
     align-items: center;
     justify-content: center;
     text-align: center;
     padding: 0 2rem;
-}
+} */
+/* Section héro */
+.hero {
+    position: relative;
+    height: 80vh;
+    overflow: hidden;
+    background-color: black;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 0 2rem;
+  }
+  
+  .video-carousel {
+    position: absolute;
+    top: 0; left: 0;
+    display: flex;
+    width: 400vw;           /* 4 slides : 3 vidéos + 1 clone */
+    height: 100%;
+    animation: scroll-videos 45s linear infinite;
+    blur(50);
+  }
+  
+  .video-carousel video {
+    width: 100vw;           /* chaque vidéo occupe tout l’écran */
+    height: 100%;
+    object-fit: cover;
+    flex-shrink: 0;
+  }
+  
+  /* 
+    - 15s pour passer de slide 1 à 2 (0 → -100vw)
+    - 15s pour passer de slide 2 à 3 (−100vw → −200vw)
+    - 15s pour passer de slide 3 à clone (−200vw → −300vw)
+  */
+  @keyframes scroll-videos {
+    0%     { transform: translateX(0);       }
+    33.33% { transform: translateX(-100vw);  }
+    66.66% { transform: translateX(-200vw);  }
+    100%   { transform: translateX(-300vw);  }
+  }
+  
+ 
 
+  /* HERO CONTENT */
 .hero-content {
     max-width: 800px;
+    position: relative;
+    z-index: 1;
+    color: #ececec;
+}
+
+.hero-content h2{
+    color:white;
 }
 
 .hero h2 {
