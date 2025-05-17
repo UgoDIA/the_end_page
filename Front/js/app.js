@@ -82,6 +82,13 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Fonctions de glisser-déposer
     function dragStart(e) {
+        // Ne pas démarrer le glissement si on clique sur un contrôle ou sur une image déjà existante
+        if (e.target.closest('.element-controls')) return;
+        // Correction : empêcher le dragstart natif sur les images dans le canvas
+        if (e.target.tagName === 'IMG' && e.target.closest('.canvas-element')) {
+            e.preventDefault();
+            return;
+        }
         e.dataTransfer.setData('text/plain', e.target.dataset.type);
     }
     
@@ -93,20 +100,24 @@ document.addEventListener('DOMContentLoaded', function() {
     function drop(e) {
         e.preventDefault();
         canvas.classList.remove('drag-over');
-        
         // Supprimer le texte d'espace réservé si c'est le premier élément
         const placeholder = canvas.querySelector('.placeholder-text');
         if (placeholder) {
             placeholder.remove();
         }
-        
         const elementType = e.dataTransfer.getData('text/plain');
-        
+        // Correction : ne créer un nouvel élément que si le drag vient de la sidebar (élément original)
+        // Si le drag vient d'un élément déjà sur le canvas, ne rien faire
+        const dragged = document.querySelector('.canvas-element.dragging');
+        if (dragged) {
+            // On repositionne simplement l'élément, pas de création
+            dragged.classList.remove('dragging');
+            return;
+        }
         // Calculer la position exacte dans le canvas
         const canvasRect = canvas.getBoundingClientRect();
         const x = e.clientX - canvasRect.left;
         const y = e.clientY - canvasRect.top;
-        
         if (elementType.startsWith('hero-') || elementType === 'testimonial' || 
             elementType === 'quote' || elementType === 'footer') {
             createPredefinedBlock(elementType, x, y);
@@ -150,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 content = '<img src="https://via.placeholder.com/300x200" alt="Image">';
                 break;
             case 'button':
-                content = '<button class="btn-primary">Cliquez ici</button>';
+                content = '<button class="btn-primary" onclick="window.open(\'#\', \'_blank\')">Cliquez ici</button>';
                 break;
             case 'video':
                 content = '<div class="video-placeholder">Vidéo (cliquez pour configurer)</div>';
@@ -216,54 +227,41 @@ document.addEventListener('DOMContentLoaded', function() {
         let initialY;
         let xOffset = 0;
         let yOffset = 0;
-
         element.addEventListener('mousedown', dragStart);
         document.addEventListener('mousemove', drag);
         document.addEventListener('mouseup', dragEnd);
-
         function dragStart(e) {
-            // Ne pas démarrer le glissement si on clique sur un contrôle
             if (e.target.closest('.element-controls')) return;
-            
             initialX = e.clientX - xOffset;
             initialY = e.clientY - yOffset;
-
             if (e.target === element || element.contains(e.target)) {
                 isDragging = true;
                 element.style.cursor = 'grabbing';
-                element.style.zIndex = '1000'; // Mettre l'élément au premier plan
+                element.style.zIndex = '1000';
+                element.classList.add('dragging');
             }
         }
-
         function drag(e) {
             if (isDragging) {
                 e.preventDefault();
-                
                 currentX = e.clientX - initialX;
                 currentY = e.clientY - initialY;
-
                 xOffset = currentX;
                 yOffset = currentY;
-
-                // Calculer les nouvelles positions
                 const newLeft = parseInt(element.style.left || 0) + currentX;
                 const newTop = parseInt(element.style.top || 0) + currentY;
-
-                // Appliquer les nouvelles positions
                 element.style.left = `${newLeft}px`;
                 element.style.top = `${newTop}px`;
-
-                // Réinitialiser les offsets pour le prochain mouvement
                 initialX = e.clientX;
                 initialY = e.clientY;
             }
         }
-
         function dragEnd(e) {
             if (isDragging) {
                 isDragging = false;
                 element.style.cursor = 'move';
-                element.style.zIndex = '1'; // Remettre l'élément à son niveau normal
+                element.style.zIndex = '1';
+                element.classList.remove('dragging');
             }
         }
     }
@@ -441,46 +439,98 @@ document.addEventListener('DOMContentLoaded', function() {
         let propertiesHTML = `<h4>Propriétés de ${getTypeName(type)}</h4>`;
         
         // Propriétés communes
-        propertiesHTML += `
-            <div class="property-group">
-                <label for="element-width">Largeur</label>
-                <input type="text" id="element-width" value="${element.style.width || 'auto'}">
-            </div>
-            <div class="property-group">
-                <label for="element-height">Hauteur</label>
-                <input type="text" id="element-height" value="${element.style.height || 'auto'}">
-            </div>
-        `;
+        // Suppression des champs de largeur et hauteur
+        // propertiesHTML += `
+        //     <div class="property-group">
+        //         <label for="element-width">Largeur</label>
+        //         <input type="text" id="element-width" value="${element.style.width || 'auto'}">
+        //     </div>
+        //     <div class="property-group">
+        //         <label for="element-height">Hauteur</label>
+        //         <input type="text" id="element-height" value="${element.style.height || 'auto'}">
+        //     </div>
+        // `;
         
         // Propriétés spécifiques au type
         switch (type) {
-            case 'heading':
-                const headingText = element.querySelector('h2').innerText;
+            case 'heading': {
+                const heading = element.querySelector('h1, h2, h3, h4');
+                const headingText = heading ? heading.innerText : '';
+                const fontSize = heading ? (heading.style.fontSize ? parseInt(heading.style.fontSize) : 32) : 32;
+                const fontFamily = heading ? (heading.style.fontFamily || 'Arial') : 'Arial';
+                const fontWeight = heading ? (heading.style.fontWeight || 'normal') : 'normal';
+                const fontStyle = heading ? (heading.style.fontStyle || 'normal') : 'normal';
+                const textDecoration = heading ? (heading.style.textDecoration || 'none') : 'none';
                 propertiesHTML += `
                     <div class="property-group">
                         <label for="heading-text">Texte</label>
                         <input type="text" id="heading-text" value="${headingText}">
                     </div>
                     <div class="property-group">
-                        <label for="heading-size">Taille</label>
-                        <select id="heading-size">
-                            <option value="h1">Très grand (H1)</option>
-                            <option value="h2" selected>Grand (H2)</option>
-                            <option value="h3">Moyen (H3)</option>
-                            <option value="h4">Petit (H4)</option>
+                        <label for="heading-font-size">Taille (px)</label>
+                        <input type="number" id="heading-font-size" min="10" max="120" value="${fontSize}">
+                    </div>
+                    <div class="property-group">
+                        <label for="heading-font-family">Police</label>
+                        <select id="heading-font-family">
+                            <option value="Arial" ${fontFamily === 'Arial' ? 'selected' : ''}>Arial</option>
+                            <option value="Times New Roman" ${fontFamily === 'Times New Roman' ? 'selected' : ''}>Times New Roman</option>
+                            <option value="Helvetica" ${fontFamily === 'Helvetica' ? 'selected' : ''}>Helvetica</option>
+                            <option value="Georgia" ${fontFamily === 'Georgia' ? 'selected' : ''}>Georgia</option>
+                            <option value="Courier New" ${fontFamily === 'Courier New' ? 'selected' : ''}>Courier New</option>
                         </select>
+                    </div>
+                    <div class="property-group">
+                        <label>Style</label>
+                        <div style="display:flex;gap:8px;">
+                            <button type="button" id="heading-bold" class="style-btn${fontWeight === 'bold' ? ' active' : ''}"><b>B</b></button>
+                            <button type="button" id="heading-italic" class="style-btn${fontStyle === 'italic' ? ' active' : ''}"><i>I</i></button>
+                            <button type="button" id="heading-underline" class="style-btn${textDecoration.includes('underline') ? ' active' : ''}"><u>U</u></button>
+                            <button type="button" id="heading-strike" class="style-btn${textDecoration.includes('line-through') ? ' active' : ''}"><s>S</s></button>
+                        </div>
                     </div>
                 `;
                 break;
-            case 'paragraph':
-                const paragraphText = element.querySelector('p').innerText;
+            }
+            case 'paragraph': {
+                const p = element.querySelector('p');
+                const paragraphText = p ? p.innerText : '';
+                const fontSize = p ? (p.style.fontSize ? parseInt(p.style.fontSize) : 18) : 18;
+                const fontFamily = p ? (p.style.fontFamily || 'Arial') : 'Arial';
+                const fontWeight = p ? (p.style.fontWeight || 'normal') : 'normal';
+                const fontStyle = p ? (p.style.fontStyle || 'normal') : 'normal';
+                const textDecoration = p ? (p.style.textDecoration || 'none') : 'none';
                 propertiesHTML += `
                     <div class="property-group">
                         <label for="paragraph-text">Texte</label>
                         <textarea id="paragraph-text" rows="4">${paragraphText}</textarea>
                     </div>
+                    <div class="property-group">
+                        <label for="paragraph-font-size">Taille (px)</label>
+                        <input type="number" id="paragraph-font-size" min="10" max="60" value="${fontSize}">
+                    </div>
+                    <div class="property-group">
+                        <label for="paragraph-font-family">Police</label>
+                        <select id="paragraph-font-family">
+                            <option value="Arial" ${fontFamily === 'Arial' ? 'selected' : ''}>Arial</option>
+                            <option value="Times New Roman" ${fontFamily === 'Times New Roman' ? 'selected' : ''}>Times New Roman</option>
+                            <option value="Helvetica" ${fontFamily === 'Helvetica' ? 'selected' : ''}>Helvetica</option>
+                            <option value="Georgia" ${fontFamily === 'Georgia' ? 'selected' : ''}>Georgia</option>
+                            <option value="Courier New" ${fontFamily === 'Courier New' ? 'selected' : ''}>Courier New</option>
+                        </select>
+                    </div>
+                    <div class="property-group">
+                        <label>Style</label>
+                        <div style="display:flex;gap:8px;">
+                            <button type="button" id="paragraph-bold" class="style-btn${fontWeight === 'bold' ? ' active' : ''}"><b>B</b></button>
+                            <button type="button" id="paragraph-italic" class="style-btn${fontStyle === 'italic' ? ' active' : ''}"><i>I</i></button>
+                            <button type="button" id="paragraph-underline" class="style-btn${textDecoration.includes('underline') ? ' active' : ''}"><u>U</u></button>
+                            <button type="button" id="paragraph-strike" class="style-btn${textDecoration.includes('line-through') ? ' active' : ''}"><s>S</s></button>
+                        </div>
+                    </div>
                 `;
                 break;
+            }
             case 'image':
                 propertiesHTML += `
                     <div class="property-group">
@@ -502,7 +552,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     </div>
                     <div class="property-group">
                         <label for="button-url">URL (lien)</label>
-                        <input type="text" id="button-url" value="#">
+                        <input type="text" id="button-url" value="">
+                    </div>
+                    <div class="property-group">
+                        <label for="button-hover-color">Couleur au survol</label>
+                        <input type="color" id="button-hover-color" value="#3498db">
                     </div>
                 `;
                 break;
@@ -545,15 +599,11 @@ document.addEventListener('DOMContentLoaded', function() {
             <h4>Style</h4>
             <div class="property-group">
                 <label for="element-bg-color">Couleur de fond</label>
-                <input type="color" id="element-bg-color" value="#ffffff">
+                <input type="color" id="element-bg-color" value="${element.style.backgroundColor || '#ffffff'}">
             </div>
             <div class="property-group">
                 <label for="element-text-color">Couleur du texte</label>
-                <input type="color" id="element-text-color" value="#333333">
-            </div>
-            <div class="property-group">
-                <label for="element-padding">Espacement interne</label>
-                <input type="text" id="element-padding" value="${element.style.padding || '1rem'}">
+                <input type="color" id="element-text-color" value="${element.style.color || '#333333'}">
             </div>
             <button id="apply-properties" class="btn-primary">Appliquer</button>
         `;
@@ -564,49 +614,87 @@ document.addEventListener('DOMContentLoaded', function() {
         document.getElementById('apply-properties').addEventListener('click', () => {
             applyProperties(element);
         });
+
+        // Ajout : mise à jour en temps réel des couleurs depuis le panneau de propriétés
+        bindLiveStyleProperties(element);
     }
     
     // Appliquer les propriétés à un élément
     function applyProperties(element) {
         const type = element.dataset.type;
-        
         // Propriétés communes
-        element.style.width = document.getElementById('element-width').value;
-        element.style.height = document.getElementById('element-height').value;
-        element.style.backgroundColor = document.getElementById('element-bg-color').value;
-        element.style.color = document.getElementById('element-text-color').value;
-        element.style.padding = document.getElementById('element-padding').value;
-        
+        // Correction : ne pas accéder à padding si le champ n'existe plus
+        const paddingInput = document.getElementById('element-padding');
+        if (paddingInput) {
+            element.style.padding = paddingInput.value;
+        }
+        // Correction : couleur du texte appliquée sur le bon élément
+        const textColor = document.getElementById('element-text-color').value;
         // Propriétés spécifiques au type
         switch (type) {
-            case 'heading':
+            case 'heading': {
                 const headingText = document.getElementById('heading-text').value;
-                const headingSize = document.getElementById('heading-size').value;
-                const headingElement = document.createElement(headingSize);
-                headingElement.innerText = headingText;
-                element.querySelector('h1, h2, h3, h4').replaceWith(headingElement);
+                const headingFontSize = document.getElementById('heading-font-size').value;
+                const heading = element.querySelector('h1, h2, h3, h4');
+                if (heading) {
+                    heading.innerText = headingText;
+                    heading.style.fontSize = headingFontSize + 'px';
+                    heading.style.color = textColor;
+                }
                 break;
-            case 'paragraph':
+            }
+            case 'paragraph': {
                 const paragraphText = document.getElementById('paragraph-text').value;
-                element.querySelector('p').innerText = paragraphText;
+                const paragraphFontSize = document.getElementById('paragraph-font-size').value;
+                const p = element.querySelector('p');
+                if (p) {
+                    p.innerText = paragraphText;
+                    p.style.fontSize = paragraphFontSize + 'px';
+                    p.style.color = textColor;
+                }
                 break;
-            case 'image':
+            }
+            case 'image': {
                 const imageUrl = document.getElementById('image-url').value;
                 const imageAlt = document.getElementById('image-alt').value;
-                element.querySelector('img').src = imageUrl;
-                element.querySelector('img').alt = imageAlt;
+                const img = element.querySelector('img');
+                if (img) {
+                    img.src = imageUrl;
+                    img.alt = imageAlt;
+                }
                 break;
-            case 'button':
+            }
+            case 'button': {
                 const buttonText = document.getElementById('button-text').value;
                 const buttonUrl = document.getElementById('button-url').value;
-                element.querySelector('button').innerText = buttonText;
-                // Ajouter un lien si nécessaire
-                if (buttonUrl && buttonUrl !== '#') {
-                    element.querySelector('button').onclick = function() {
-                        window.open(buttonUrl, '_blank');
+                const buttonHoverColor = document.getElementById('button-hover-color').value;
+                const btn = element.querySelector('button');
+                if (btn) {
+                    btn.innerText = buttonText;
+                    if (buttonUrl && buttonUrl !== '#') {
+                        let url = buttonUrl;
+                        if (!/^https?:\/\//i.test(url)) {
+                            url = 'https://' + url;
+                        }
+                        btn.onclick = function(e) {
+                            e.stopPropagation();
+                            e.preventDefault();
+                            window.open(url, '_blank');
+                        };
+                    } else {
+                        btn.onclick = null;
+                    }
+                    // Appliquer la couleur au survol
+                    btn.style.transition = 'background-color 0.3s, color 0.3s';
+                    btn.onmouseover = function() {
+                        this.style.backgroundColor = buttonHoverColor;
+                    };
+                    btn.onmouseout = function() {
+                        this.style.backgroundColor = '';
                     };
                 }
                 break;
+            }
             case 'video':
                 const videoUrl = document.getElementById('video-url').value;
                 const videoAutoplay = document.getElementById('video-autoplay').checked;
@@ -666,6 +754,8 @@ document.addEventListener('DOMContentLoaded', function() {
                 showDefaultProperties();
             }
         });
+        // Vider le panneau de propriétés après application
+        showDefaultProperties();
     }
     
     // Afficher les propriétés par défaut
@@ -1132,4 +1222,275 @@ document.addEventListener('DOMContentLoaded', function() {
         makeElementResizable(element);
         playSound('add');
     }
+
+    // Ajout d'un aperçu visuel à côté des inputs couleur
+    function addColorPreview(inputId, color) {
+        const input = document.getElementById(inputId);
+        if (!input) return;
+        let preview = input.parentElement.querySelector('.color-preview');
+        if (!preview) {
+            preview = document.createElement('span');
+            preview.className = 'color-preview';
+            preview.style.display = 'inline-block';
+            preview.style.width = '24px';
+            preview.style.height = '24px';
+            preview.style.marginLeft = '8px';
+            preview.style.borderRadius = '6px';
+            preview.style.border = '1px solid #ccc';
+            preview.style.verticalAlign = 'middle';
+            input.parentElement.appendChild(preview);
+        }
+        preview.style.background = color;
+    }
+
+    function bindLiveStyleProperties(element) {
+        const bgColorInput = document.getElementById('element-bg-color');
+        const textColorInput = document.getElementById('element-text-color');
+        const headingFontSizeInput = document.getElementById('heading-font-size');
+        const headingTextInput = document.getElementById('heading-text');
+        const paragraphTextInput = document.getElementById('paragraph-text');
+        const paragraphFontSizeInput = document.getElementById('paragraph-font-size');
+        // Couleur de fond (déjà géré)
+        if (bgColorInput) {
+            addColorPreview('element-bg-color', bgColorInput.value);
+            bgColorInput.addEventListener('input', (e) => {
+                element.style.backgroundColor = e.target.value;
+                addColorPreview('element-bg-color', e.target.value);
+            });
+        }
+        // Couleur du texte (réactif sur balise)
+        if (textColorInput) {
+            addColorPreview('element-text-color', textColorInput.value);
+            textColorInput.addEventListener('input', (e) => {
+                const color = e.target.value;
+                // Titre
+                const heading = element.querySelector('h1, h2, h3, h4');
+                if (heading) heading.style.color = color;
+                // Paragraphe
+                const p = element.querySelector('p');
+                if (p) p.style.color = color;
+                addColorPreview('element-text-color', color);
+            });
+        }
+        // Taille du titre (réactif)
+        if (headingFontSizeInput) {
+            headingFontSizeInput.addEventListener('input', (e) => {
+                const heading = element.querySelector('h1, h2, h3, h4');
+                if (heading) heading.style.fontSize = e.target.value + 'px';
+            });
+        }
+        // Modification du texte du paragraphe en live
+        if (paragraphTextInput) {
+            paragraphTextInput.addEventListener('input', (e) => {
+                const p = element.querySelector('p');
+                if (p) p.innerText = e.target.value;
+            });
+        }
+        // Gestion réactive de la taille de police pour les paragraphes
+        if (paragraphFontSizeInput) {
+            paragraphFontSizeInput.addEventListener('input', (e) => {
+                const p = element.querySelector('p');
+                if (p) p.style.fontSize = e.target.value + 'px';
+            });
+        }
+        // Titres
+        const headingFontFamilyInput = document.getElementById('heading-font-family');
+        const headingBoldBtn = document.getElementById('heading-bold');
+        const headingItalicBtn = document.getElementById('heading-italic');
+        const headingUnderlineBtn = document.getElementById('heading-underline');
+        const headingStrikeBtn = document.getElementById('heading-strike');
+        if (headingFontFamilyInput) {
+            headingFontFamilyInput.addEventListener('change', (e) => {
+                const heading = element.querySelector('h1, h2, h3, h4');
+                if (heading) heading.style.fontFamily = e.target.value;
+            });
+        }
+        if (headingBoldBtn) {
+            headingBoldBtn.addEventListener('click', () => {
+                const heading = element.querySelector('h1, h2, h3, h4');
+                if (heading) {
+                    heading.style.fontWeight = heading.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                    headingBoldBtn.classList.toggle('active');
+                }
+            });
+        }
+        if (headingItalicBtn) {
+            headingItalicBtn.addEventListener('click', () => {
+                const heading = element.querySelector('h1, h2, h3, h4');
+                if (heading) {
+                    heading.style.fontStyle = heading.style.fontStyle === 'italic' ? 'normal' : 'italic';
+                    headingItalicBtn.classList.toggle('active');
+                }
+            });
+        }
+        if (headingUnderlineBtn) {
+            headingUnderlineBtn.addEventListener('click', () => {
+                const heading = element.querySelector('h1, h2, h3, h4');
+                if (heading) {
+                    const deco = heading.style.textDecoration || '';
+                    if (deco.includes('underline')) {
+                        heading.style.textDecoration = deco.replace('underline', '').replace('  ', ' ').trim();
+                        headingUnderlineBtn.classList.remove('active');
+                    } else {
+                        heading.style.textDecoration = (deco + ' underline').trim();
+                        headingUnderlineBtn.classList.add('active');
+                    }
+                }
+            });
+        }
+        if (headingStrikeBtn) {
+            headingStrikeBtn.addEventListener('click', () => {
+                const heading = element.querySelector('h1, h2, h3, h4');
+                if (heading) {
+                    const deco = heading.style.textDecoration || '';
+                    if (deco.includes('line-through')) {
+                        heading.style.textDecoration = deco.replace('line-through', '').replace('  ', ' ').trim();
+                        headingStrikeBtn.classList.remove('active');
+                    } else {
+                        heading.style.textDecoration = (deco + ' line-through').trim();
+                        headingStrikeBtn.classList.add('active');
+                    }
+                }
+            });
+        }
+        // Paragraphes
+        const paragraphFontFamilyInput = document.getElementById('paragraph-font-family');
+        const paragraphBoldBtn = document.getElementById('paragraph-bold');
+        const paragraphItalicBtn = document.getElementById('paragraph-italic');
+        const paragraphUnderlineBtn = document.getElementById('paragraph-underline');
+        const paragraphStrikeBtn = document.getElementById('paragraph-strike');
+        if (paragraphFontFamilyInput) {
+            paragraphFontFamilyInput.addEventListener('change', (e) => {
+                const p = element.querySelector('p');
+                if (p) p.style.fontFamily = e.target.value;
+            });
+        }
+        if (paragraphBoldBtn) {
+            paragraphBoldBtn.addEventListener('click', () => {
+                const p = element.querySelector('p');
+                if (p) {
+                    p.style.fontWeight = p.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                    paragraphBoldBtn.classList.toggle('active');
+                }
+            });
+        }
+        if (paragraphItalicBtn) {
+            paragraphItalicBtn.addEventListener('click', () => {
+                const p = element.querySelector('p');
+                if (p) {
+                    p.style.fontStyle = p.style.fontStyle === 'italic' ? 'normal' : 'italic';
+                    paragraphItalicBtn.classList.toggle('active');
+                }
+            });
+        }
+        if (paragraphUnderlineBtn) {
+            paragraphUnderlineBtn.addEventListener('click', () => {
+                const p = element.querySelector('p');
+                if (p) {
+                    const deco = p.style.textDecoration || '';
+                    if (deco.includes('underline')) {
+                        p.style.textDecoration = deco.replace('underline', '').replace('  ', ' ').trim();
+                        paragraphUnderlineBtn.classList.remove('active');
+                    } else {
+                        p.style.textDecoration = (deco + ' underline').trim();
+                        paragraphUnderlineBtn.classList.add('active');
+                    }
+                }
+            });
+        }
+        if (paragraphStrikeBtn) {
+            paragraphStrikeBtn.addEventListener('click', () => {
+                const p = element.querySelector('p');
+                if (p) {
+                    const deco = p.style.textDecoration || '';
+                    if (deco.includes('line-through')) {
+                        p.style.textDecoration = deco.replace('line-through', '').replace('  ', ' ').trim();
+                        paragraphStrikeBtn.classList.remove('active');
+                    } else {
+                        p.style.textDecoration = (deco + ' line-through').trim();
+                        paragraphStrikeBtn.classList.add('active');
+                    }
+                }
+            });
+        }
+    }
+
+    // Ajout : popup hover pour les boutons avec URL
+    function openButtonPopup(url) {
+        // Correction : préfixer l'URL si besoin
+        if (!/^https?:\/\//i.test(url)) {
+            url = 'https://' + url;
+        }
+        // Supprimer toute popup existante
+        let existing = document.getElementById('button-popup-modal');
+        if (existing) existing.remove();
+        // Créer la popup
+        const modal = document.createElement('div');
+        modal.id = 'button-popup-modal';
+        modal.style.position = 'fixed';
+        modal.style.top = '50%';
+        modal.style.left = '50%';
+        modal.style.transform = 'translate(-50%, -50%)';
+        modal.style.width = '80vw';
+        modal.style.height = '80vh';
+        modal.style.background = '#fff';
+        modal.style.borderRadius = '12px';
+        modal.style.boxShadow = '0 8px 32px rgba(0,0,0,0.25)';
+        modal.style.zIndex = '9999';
+        modal.style.display = 'flex';
+        modal.style.flexDirection = 'column';
+        // Bouton fermer
+        const closeBtn = document.createElement('button');
+        closeBtn.innerHTML = '✖';
+        closeBtn.style.alignSelf = 'flex-end';
+        closeBtn.style.margin = '12px 16px 0 0';
+        closeBtn.style.background = 'none';
+        closeBtn.style.border = 'none';
+        closeBtn.style.fontSize = '1.5rem';
+        closeBtn.style.cursor = 'pointer';
+        closeBtn.onclick = () => modal.remove();
+        // Iframe
+        const iframe = document.createElement('iframe');
+        iframe.src = url;
+        iframe.style.flex = '1';
+        iframe.style.width = '100%';
+        iframe.style.border = 'none';
+        iframe.style.borderRadius = '0 0 12px 12px';
+        // Gestion d'erreur de chargement
+        let errorShown = false;
+        iframe.onerror = iframe.onload = function() {
+            // Si l'iframe reste vide après 1s, afficher l'erreur
+            setTimeout(() => {
+                if (!iframe.contentDocument || iframe.contentDocument.body.innerHTML === '' || iframe.contentWindow.location.href === 'about:blank') {
+                    if (!errorShown) {
+                        errorShown = true;
+                        iframe.style.display = 'none';
+                        const errorDiv = document.createElement('div');
+                        errorDiv.style.flex = '1';
+                        errorDiv.style.display = 'flex';
+                        errorDiv.style.flexDirection = 'column';
+                        errorDiv.style.justifyContent = 'center';
+                        errorDiv.style.alignItems = 'center';
+                        errorDiv.innerHTML = `<p style='color:#c0392b;font-size:1.2rem;margin-bottom:1rem;'>Impossible d'afficher ce site dans une popup.<br>Ce site interdit l'affichage en iframe.</p>`;
+                        const openBtn = document.createElement('button');
+                        openBtn.textContent = 'Ouvrir dans un nouvel onglet';
+                        openBtn.style.background = '#3498db';
+                        openBtn.style.color = '#fff';
+                        openBtn.style.padding = '10px 20px';
+                        openBtn.style.border = 'none';
+                        openBtn.style.borderRadius = '8px';
+                        openBtn.style.fontSize = '1rem';
+                        openBtn.style.cursor = 'pointer';
+                        openBtn.onclick = () => { window.open(url, '_blank'); };
+                        errorDiv.appendChild(openBtn);
+                        modal.appendChild(errorDiv);
+                    }
+                }
+            }, 1000);
+        };
+        modal.appendChild(closeBtn);
+        modal.appendChild(iframe);
+        document.body.appendChild(modal);
+    }
+
 });

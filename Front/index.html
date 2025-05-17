@@ -107,9 +107,45 @@
                 </div>
                 
                 <div class="editor-properties" id="properties-panel">
-                    <h3>Propriétés</h3>
+                    <h3><span class="panel-title-icon">🛠</span>Propriétés</h3>
                     <div class="properties-content">
-                        <p class="no-selection">Sélectionnez un élément pour modifier ses propriétés</p>
+                        <div class="accordion-section open">
+                            <div class="accordion-header">Dimensions <span class="chevron">▶</span></div>
+                            <div class="accordion-content">
+                                <div class="property-group">
+                                    <label for="element-width">Largeur <span class="icon tooltip">🔒<span class="tooltip-content">Verrouiller la largeur</span></span></label>
+                                    <input type="text" id="element-width">
+                                </div>
+                                <div class="property-group">
+                                    <label for="element-height">Hauteur <span class="icon tooltip">🔒<span class="tooltip-content">Verrouiller la hauteur</span></span></label>
+                                    <input type="text" id="element-height">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="accordion-section open">
+                            <div class="accordion-header">Texte <span class="chevron">▶</span></div>
+                            <div class="accordion-content">
+                                <!-- Champs dynamiques selon le type d'élément (à remplir par JS) -->
+                            </div>
+                        </div>
+                        <div class="accordion-section open">
+                            <div class="accordion-header">Style <span class="chevron">▶</span></div>
+                            <div class="accordion-content">
+                                <div class="property-group">
+                                    <label for="element-bg-color">Couleur de fond <span class="icon tooltip">🎨<span class="tooltip-content">Changer la couleur de fond</span></span></label>
+                                    <input type="color" id="element-bg-color">
+                                </div>
+                                <div class="property-group">
+                                    <label for="element-text-color">Couleur du texte <span class="icon tooltip">🎨<span class="tooltip-content">Changer la couleur du texte</span></span></label>
+                                    <input type="color" id="element-text-color">
+                                </div>
+                                <div class="property-group">
+                                    <label for="element-padding">Espacement interne <span class="icon tooltip">ℹ️<span class="tooltip-content">Padding interne de l'élément</span></span></label>
+                                    <input type="text" id="element-padding">
+                                </div>
+                            </div>
+                        </div>
+                        <button id="apply-properties">Appliquer</button>
                     </div>
                 </div>
             </div>
