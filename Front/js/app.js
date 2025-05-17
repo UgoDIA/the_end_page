@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const elements = document.querySelectorAll('.element');
     const propertiesPanel = document.getElementById('properties-panel');
     const propertiesContent = document.querySelector('.properties-content');
+    const previewBtn = document.getElementById('preview-btn');
     const saveBtn = document.getElementById('save-btn');
     const shareBtn = document.getElementById('share-btn');
     const resetBtn = document.getElementById('reset-btn');
@@ -1455,11 +1456,14 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Ajouter le CSS pour le fond noir en mode mobile
+    // Fusionner les deux déclarations de style en une seule
     const style = document.createElement('style');
     style.textContent = `
         #fullscreen-preview.mobile-mode {
             background-color: black;
+        }
+        .mini-toolbar {
+            display: none;
         }
     `;
     document.head.appendChild(style);
