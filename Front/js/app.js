@@ -4,7 +4,6 @@ document.addEventListener('DOMContentLoaded', function() {
     const elements = document.querySelectorAll('.element');
     const propertiesPanel = document.getElementById('properties-panel');
     const propertiesContent = document.querySelector('.properties-content');
-    const previewBtn = document.getElementById('preview-btn');
     const saveBtn = document.getElementById('save-btn');
     const shareBtn = document.getElementById('share-btn');
     const resetBtn = document.getElementById('reset-btn');
@@ -778,13 +777,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Gestion des modales
-    previewBtn.addEventListener('click', () => {
-        // Générer l'aperçu
-        const previewHTML = generatePreview();
-        previewContainer.innerHTML = previewHTML;
-        previewModal.style.display = 'flex';
-    });
-    
     shareBtn.addEventListener('click', () => {
         // Générer un lien de partage
         const pageData = savePageData();
@@ -801,7 +793,6 @@ document.addEventListener('DOMContentLoaded', function() {
     closeModalBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             shareModal.style.display = 'none';
-            previewModal.style.display = 'none';
         });
     });
     
@@ -836,42 +827,6 @@ document.addEventListener('DOMContentLoaded', function() {
             tone: document.getElementById('tone-select').value,
             elements: elements
         };
-    }
-    
-    // Générer un aperçu
-    function generatePreview() {
-        const theme = document.getElementById('theme-select').value;
-        const tone = document.getElementById('tone-select').value;
-        
-        let previewHTML = `
-            <div class="preview-page ${theme}-theme ${tone}-tone">
-        `;
-        
-        // Ajouter les éléments
-        canvas.querySelectorAll('.canvas-element').forEach(element => {
-            // Cloner l'élément sans les contrôles
-            const clone = element.cloneNode(true);
-            const controls = clone.querySelector('.element-controls');
-            if (controls) controls.remove();
-            
-            previewHTML += `
-                <div class="preview-element" style="
-                    position: absolute;
-                    top: ${element.style.top};
-                    left: ${element.style.left};
-                    width: ${element.style.width || 'auto'};
-                    height: ${element.style.height || 'auto'};
-                    background-color: ${element.style.backgroundColor || 'transparent'};
-                    color: ${element.style.color || 'inherit'};
-                    padding: ${element.style.padding || '1rem'};
-                ">
-                    ${clone.innerHTML}
-                </div>
-            `;
-        });
-        
-        previewHTML += `</div>`;
-        return previewHTML;
     }
     
     // Générer un ID de partage
@@ -1492,5 +1447,21 @@ document.addEventListener('DOMContentLoaded', function() {
         modal.appendChild(iframe);
         document.body.appendChild(modal);
     }
+
+    // Ajouter l'écouteur d'événement pour le bouton de fermeture
+    document.addEventListener('click', function(event) {
+        if (event.target.id === 'close-preview') {
+            previewModal.style.display = 'none';
+        }
+    });
+
+    // Ajouter le CSS pour le fond noir en mode mobile
+    const style = document.createElement('style');
+    style.textContent = `
+        #fullscreen-preview.mobile-mode {
+            background-color: black;
+        }
+    `;
+    document.head.appendChild(style);
 
 });
