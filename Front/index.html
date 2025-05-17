@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PageDépart - Créez votre page de départ personnalisée</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header>
+        <div class="logo">
+            <h1>PageDépart</h1>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="#accueil">Accueil</a></li>
+                <li><a href="#editeur">Créer</a></li>
+                <li><a href="#apropos">À propos</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <main>
+        <section id="accueil" class="hero">
+            <div class="hero-content">
+                <h2>Créez votre page de départ unique</h2>
+                <p>Concevez facilement une page personnalisée avec notre éditeur glisser-déposer</p>
+                <a href="#editeur" class="btn-primary">Commencer maintenant</a>
+            </div>
+        </section>
+
+        <section id="editeur" class="editor-section">
+            <h2>Créez votre page</h2>
+            <div class="editor-container">
+                <div class="editor-sidebar">
+                    <h3>Éléments</h3>
+                    <div class="elements-container">
+                        <div class="element" draggable="true" data-type="heading">
+                            <i class="fas fa-heading"></i>
+                            <span>Titre</span>
+                        </div>
+                        <div class="element" draggable="true" data-type="paragraph">
+                            <i class="fas fa-paragraph"></i>
+                            <span>Paragraphe</span>
+                        </div>
+                        <div class="element" draggable="true" data-type="image">
+                            <i class="fas fa-image"></i>
+                            <span>Image</span>
+                        </div>
+                        <div class="element" draggable="true" data-type="button">
+                            <i class="fas fa-square"></i>
+                            <span>Bouton</span>
+                        </div>
+                        <div class="element" draggable="true" data-type="video">
+                            <i class="fas fa-video"></i>
+                            <span>Vidéo</span>
+                        </div>
+                        <div class="element" draggable="true" data-type="audio">
+                            <i class="fas fa-music"></i>
+                            <span>Audio</span>
+                        </div>
+                        <div class="element" draggable="true" data-type="gif">
+                            <i class="fas fa-film"></i>
+                            <span>GIF</span>
+                        </div>
+                    </div>
+                    
+                    <h3>Style</h3>
+                    <div class="style-options">
+                        <div class="option-group">
+                            <label for="theme-select">Thème</label>
+                            <select id="theme-select">
+                                <option value="light">Clair</option>
+                                <option value="dark">Sombre</option>
+                                <option value="colorful">Coloré</option>
+                                <option value="minimal">Minimaliste</option>
+                            </select>
+                        </div>
+                        
+                        <div class="option-group">
+                            <label for="tone-select">Ton narratif</label>
+                            <select id="tone-select">
+                                <option value="dramatic">Dramatique</option>
+                                <option value="ironic">Ironique</option>
+                                <option value="cringe">Cringe</option>
+                                <option value="classy">Classe</option>
+                                <option value="touching">Touchant</option>
+                                <option value="absurd">Absurde</option>
+                                <option value="passive-aggressive">Passif-agressif</option>
+                                <option value="honest">Honnête</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="editor-canvas">
+                    <div class="canvas-container" id="canvas">
+                        <div class="placeholder-text">Glissez et déposez des éléments ici pour créer votre page</div>
+                    </div>
+                </div>
+                
+                <div class="editor-properties" id="properties-panel">
+                    <h3>Propriétés</h3>
+                    <div class="properties-content">
+                        <p class="no-selection">Sélectionnez un élément pour modifier ses propriétés</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="editor-actions">
+                <button id="preview-btn" class="btn-secondary"><i class="fas fa-eye"></i> Aperçu</button>
+                <button id="save-btn" class="btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+                <button id="share-btn" class="btn-primary"><i class="fas fa-share-alt"></i> Partager</button>
+            </div>
+        </section>
+        
+        <section id="apropos" class="about-section">
+            <h2>À propos de PageDépart</h2>
+            <p>PageDépart est un outil simple et puissant qui vous permet de créer des pages de départ personnalisées en quelques minutes. Que vous souhaitiez créer une page d'adieu dramatique, un message ironique ou une déclaration touchante, notre éditeur intuitif vous donne tous les outils nécessaires pour exprimer votre créativité.</p>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2023 PageDépart. Tous droits réservés.</p>
+    </footer>
+
+    <!-- Modal de partage -->
+    <div class="modal" id="share-modal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Partagez votre page</h3>
+            <p>Utilisez ce lien pour partager votre page de départ :</p>
+            <div class="share-link-container">
+                <input type="text" id="share-link" readonly>
+                <button id="copy-link-btn"><i class="fas fa-copy"></i></button>
+            </div>
+            <div class="social-share">
+                <button class="social-btn facebook"><i class="fab fa-facebook-f"></i></button>
+                <button class="social-btn twitter"><i class="fab fa-twitter"></i></button>
+                <button class="social-btn whatsapp"><i class="fab fa-whatsapp"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal d'aperçu -->
+    <div class="modal" id="preview-modal">
+        <div class="modal-content preview-modal-content">
+            <span class="close-modal">&times;</span>
+            <h3>Aperçu de votre page</h3>
+            <div class="preview-container" id="preview-container"></div>
+        </div>
+    </div>
+
+    <script src="js/app.js"></script>
+</body>
+</html>

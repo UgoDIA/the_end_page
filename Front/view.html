@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisation - PageDépart</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+        
+        .view-container {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .back-to-home {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background-color: rgba(0, 0, 0, 0.5);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 30px;
+            text-decoration: none;
+            font-size: 14px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: background-color 0.3s;
+        }
+        
+        .back-to-home:hover {
+            background-color: rgba(0, 0, 0, 0.8);
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 1.5rem;
+            color: #555;
+        }
+        
+        .error {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            font-size: 1.5rem;
+            color: #d9534f;
+            text-align: center;
+            padding: 0 2rem;
+        }
+        
+        .error .btn-primary {
+            margin-top: 2rem;
+        }
+        
+        /* Thèmes */
+        .light-theme {
+            background-color: #fff;
+            color: #333;
+        }
+        
+        .dark-theme {
+            background-color: #222;
+            color: #f5f5f5;
+        }
+        
+        .colorful-theme {
+            background: linear-gradient(135deg, #3498db, #8e44ad);
+            color: #fff;
+        }
+        
+        .minimal-theme {
+            background-color: #f8f9fa;
+            color: #333;
+        }
+        
+        /* Tons */
+        .dramatic-tone .preview-element h1,
+        .dramatic-tone .preview-element h2,
+        .dramatic-tone .preview-element h3 {
+            font-family: 'Georgia', serif;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+        
+        .ironic-tone .preview-element {
+            font-style: italic;
+        }
+        
+        .cringe-tone .preview-element {
+            font-family: 'Comic Sans MS', cursive;
+        }
+        
+        .classy-tone .preview-element {
+            font-family: 'Playfair Display', serif;
+        }
+        
+        .touching-tone .preview-element {
+            font-family: 'Roboto', sans-serif;
+            line-height: 1.8;
+        }
+        
+        .absurd-tone .preview-element {
+            transform: rotate(-1deg);
+        }
+        
+        .passive-aggressive-tone .preview-element {
+            font-family: 'Arial', sans-serif;
+            font-style: italic;
+        }
+        
+        .honest-tone .preview-element {
+            font-family: 'Courier New', monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="view-container" id="view-container">
+        <div class="loading" id="loading">
+            <p>Chargement de la page...</p>
+        </div>
+    </div>
+    
+    <a href="index.html" class="back-to-home">
+        <i class="fas fa-arrow-left"></i> Retour à l'accueil
+    </a>
+    
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const viewContainer = document.getElementById('view-container');
+            const loading = document.getElementById('loading');
+            
+            // Récupérer l'ID de la page depuis l'URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const pageId = urlParams.get('id');
+            
+            if (!pageId) {
+                showError('ID de page non spécifié. Impossible de charger la page.');
+                return;
+            }
+            
+            // Charger les données de la page (dans une application réelle, cela serait récupéré depuis un serveur)
+            const pageData = localStorage.getItem(`page_${pageId}`);
+            
+            if (!pageData) {
+                showError('Page introuvable. Elle a peut-être été supprimée ou l\'ID est incorrect.');
+                return;
+            }
+            
+            try {
+                const parsedData = JSON.parse(pageData);
+                renderPage(parsedData);
+            } catch (e) {
+                console.error('Erreur lors du chargement de la page:', e);
+                showError('Erreur lors du chargement de la page. Veuillez réessayer.');
+            }
+        });
+        
+        function renderPage(pageData) {
+            const viewContainer = document.getElementById('view-container');
+            const loading = document.getElementById('loading');
+            
+            // Appliquer le thème et le ton
+            viewContainer.className = `view-container ${pageData.theme}-theme ${pageData.tone}-tone`;
+            
+            // Créer le conteneur de la page
+            const pageContainer = document.createElement('div');
+            pageContainer.className = 'preview-page';
+            pageContainer.style.position = 'relative';
+            pageContainer.style.width = '100%';
+            pageContainer.style.height = '100%';
+            
+            // Ajouter les éléments
+            pageData.elements.forEach(elementData => {
+                const element = document.createElement('div');
+                element.className = 'preview-element';
+                element.style.position = 'absolute';
+                element.style.top = elementData.style.top;
+                element.style.left = elementData.style.left;
+                element.style.width = elementData.style.width || 'auto';
+                element.style.height = elementData.style.height || 'auto';
+                element.style.backgroundColor = elementData.style.backgroundColor || 'transparent';
+                element.style.color = elementData.style.color || 'inherit';
+                element.style.padding = elementData.style.padding || '1rem';
+                
+                // Ajouter le contenu sans les contrôles
+                const tempDiv = document.createElement('div');
+                tempDiv.innerHTML = elementData.content;
+                
+                // Supprimer les contrôles s'ils existent
+                const controls = tempDiv.querySelector('.element-controls');
+                if (controls) controls.remove();
+                
+                element.innerHTML = tempDiv.innerHTML;
+                pageContainer.appendChild(element);
+            });
+            
+            // Remplacer le chargement par la page
+            viewContainer.removeChild(loading);
+            viewContainer.appendChild(pageContainer);
+            
+            // Ajouter le titre de la page
+            document.title = pageData.title + ' - PageDépart';
+        }
+        
+        function showError(message) {
+            const viewContainer = document.getElementById('view-container');
+            const loading = document.getElementById('loading');
+            
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error';
+            errorDiv.innerHTML = `
+                <p>${message}</p>
+                <a href="index.html" class="btn-primary">Retour à l'accueil</a>
+            `;
+            
+            viewContainer.removeChild(loading);
+            viewContainer.appendChild(errorDiv);
+        }
+    </script>
+</body>
+</html>
