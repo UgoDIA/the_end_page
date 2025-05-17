@@ -17,7 +17,7 @@ def create_app():
         SECRET_KEY=os.getenv('SECRET_KEY', 'dev'),
         APPLICATION_ROOT=os.getenv(
             'APPLICATION_ROOT', '/home/username/public_html/your_app'),
-        SQLALCHEMY_DATABASE_URI=os.getenv('DATABASE_URL'),
+        SQLALCHEMY_DATABASE_URI='sqlite:///app.db',  # SQLite database file
         SQLALCHEMY_TRACK_MODIFICATIONS=False
     )
 
