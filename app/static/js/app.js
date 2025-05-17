@@ -826,17 +826,31 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Gestion des modales
-    shareBtn.addEventListener('click', () => {
-        // Générer un lien de partage
-        const pageData = savePageData();
-        const shareId = generateShareId();
-        // Simuler le stockage (dans une application réelle, cela serait stocké dans une base de données)
-        localStorage.setItem(`page_${shareId}`, JSON.stringify(pageData));
+    shareBtn.addEventListener('click', async () => {
+        try {
+            // Save the page first
+            const pageData = savePageData();
+            const response = await fetch('/api/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(pageData)
+            });
 
-        // Afficher le lien
-        const shareUrl = `${window.location.origin}/view.html?id=${shareId}`;
-        shareLink.value = shareUrl;
-        shareModal.style.display = 'flex';
+            const result = await response.json();
+            if (result.status === 'success') {
+                // Generate share URL using the page slug
+                const shareUrl = `${window.location.origin}/page/${result.page.slug}`;
+                shareLink.value = shareUrl;
+                shareModal.style.display = 'flex';
+            } else {
+                alert('Erreur lors de la sauvegarde de la page');
+            }
+        } catch (error) {
+            console.error('Error saving page:', error);
+            alert('Erreur lors de la sauvegarde de la page');
+        }
     });
 
     closeModalBtns.forEach(btn => {
@@ -854,34 +868,110 @@ document.addEventListener('DOMContentLoaded', function () {
     // Sauvegarder les données de la page
     function savePageData() {
         const elements = [];
-        canvas.querySelectorAll('.canvas-element').forEach(element => {
+        canvas.querySelectorAll('.canvas-element').forEach((element, index) => {
             elements.push({
                 type: element.dataset.type,
-                content: element.innerHTML,
-                style: {
-                    top: element.style.top,
-                    left: element.style.left,
-                    width: element.style.width,
-                    height: element.style.height,
-                    backgroundColor: element.style.backgroundColor,
-                    color: element.style.color,
-                    padding: element.style.padding
-                }
+                content: {
+                    html: element.innerHTML,
+                    style: {
+                        top: element.style.top,
+                        left: element.style.left,
+                        width: element.style.width,
+                        height: element.style.height,
+                        backgroundColor: element.style.backgroundColor,
+                        color: element.style.color,
+                        padding: element.style.padding
+                    }
+                },
+                position: index + 1
             });
         });
 
         return {
             title: 'Ma page de départ',
+            slug: generateSlug(),
             theme: document.getElementById('theme-select').value,
             tone: document.getElementById('tone-select').value,
-            elements: elements
+            content: {
+                elements: elements
+            }
         };
     }
 
-    // Générer un ID de partage
-    function generateShareId() {
-        return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    // Generate a URL-friendly slug
+    function generateSlug() {
+        const timestamp = new Date().getTime();
+        const random = Math.random().toString(36).substring(2, 8);
+        return `page-${timestamp}-${random}`;
     }
+
+    // Load page data from API
+    async function loadPage(slug) {
+        try {
+            const response = await fetch(`/api/page/${slug}`);
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                const page = result.page;
+
+                // Apply theme and tone
+                document.body.className = '';
+                document.body.classList.add(`${page.theme}-theme`);
+                document.body.classList.add(`${page.tone}-tone`);
+
+                // Clear existing elements
+                canvas.innerHTML = '';
+
+                // Load elements
+                if (page.elements && page.elements.length > 0) {
+                    page.elements.forEach(element => {
+                        createElementFromData(element);
+                    });
+                }
+            } else {
+                console.error('Error loading page:', result.message);
+            }
+        } catch (error) {
+            console.error('Error loading page:', error);
+        }
+    }
+
+    // Create element from saved data
+    function createElementFromData(elementData) {
+        const element = document.createElement('div');
+        element.className = 'canvas-element';
+        element.dataset.type = elementData.type;
+
+        // Apply content
+        element.innerHTML = elementData.content.html;
+
+        // Apply styles
+        const style = elementData.content.style;
+        Object.assign(element.style, style);
+
+        // Add to canvas
+        canvas.appendChild(element);
+
+        // Make element draggable
+        makeElementDraggable(element);
+
+        // Add click handler for properties
+        element.addEventListener('click', (e) => {
+            e.stopPropagation();
+            selectElement(element);
+        });
+    }
+
+    // Check if we're on a shared page
+    document.addEventListener('DOMContentLoaded', function () {
+        const path = window.location.pathname;
+        const match = path.match(/\/page\/([^\/]+)/);
+
+        if (match) {
+            const slug = match[1];
+            loadPage(slug);
+        }
+    });
 
     // Appliquer le thème sélectionné
     document.getElementById('theme-select').addEventListener('change', function () {
@@ -932,7 +1022,7 @@ document.addEventListener('DOMContentLoaded', function () {
             element.style.padding = elementData.style.padding;
 
             // Ajouter le contenu sans les contrôles
-            element.innerHTML = elementData.content;
+            element.innerHTML = elementData.content.html;
 
             // Ajouter les contrôles
             const controls = document.createElement('div');
@@ -1532,22 +1622,22 @@ document.addEventListener('DOMContentLoaded', function () {
         // Supprimer tous les éléments du canvas
         const canvasElements = canvas.querySelectorAll('.canvas-element');
         canvasElements.forEach(element => element.remove());
-        
+
         // Réinitialiser le compteur d'éléments
         elementCounter = 0;
-        
+
         // Réinitialiser l'élément sélectionné
         selectedElement = null;
-        
+
         // Réinitialiser le panneau de propriétés
         showDefaultProperties();
-        
+
         // Ajouter le texte d'espace réservé
         canvas.innerHTML = '<div class="placeholder-text">Glissez et déposez des éléments ici pour créer votre page</div>';
-        
+
         // Fermer la modal de confirmation
         resetConfirm.style.display = 'none';
-        
+
         // Jouer le son de sauvegarde
         playSound('save');
     });

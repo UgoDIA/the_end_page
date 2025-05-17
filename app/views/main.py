@@ -19,6 +19,11 @@ def feed():
     return render_template('feed.html')
 
 
+@main_bp.route('/page/<slug>')
+def view_page(slug):
+    return render_template('view.html')
+
+
 @main_bp.route('/<path:path>')
 def serve_static(path):
     return send_from_directory(os.path.join(current_app.root_path, 'static'), path)

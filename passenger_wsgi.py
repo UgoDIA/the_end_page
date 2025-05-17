@@ -1,4 +1,9 @@
-from app import app as application
+import imp
+import os
+import sys
 
-if __name__ == '__main__':
-    application.run()
+
+sys.path.insert(0, os.path.dirname(__file__))
+
+wsgi = imp.load_source('wsgi', 'app.py')
+application = wsgi.app

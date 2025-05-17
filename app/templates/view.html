@@ -1,238 +1,279 @@
 <!DOCTYPE html>
 <html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Visualisation - PageDépart</title>
-    <link rel="stylesheet" href="css/style.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        body {
-            margin: 0;
-            padding: 0;
-            overflow: hidden;
-        }
-        
-        .view-container {
-            position: relative;
-            width: 100vw;
-            height: 100vh;
-            overflow: hidden;
-        }
-        
-        .back-to-home {
-            position: fixed;
-            bottom: 20px;
-            right: 20px;
-            background-color: rgba(0, 0, 0, 0.5);
-            color: white;
-            padding: 10px 15px;
-            border-radius: 30px;
-            text-decoration: none;
-            font-size: 14px;
-            z-index: 1000;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-            transition: background-color 0.3s;
-        }
-        
-        .back-to-home:hover {
-            background-color: rgba(0, 0, 0, 0.8);
-        }
-        
-        .loading {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-size: 1.5rem;
-            color: #555;
-        }
-        
-        .error {
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            font-size: 1.5rem;
-            color: #d9534f;
-            text-align: center;
-            padding: 0 2rem;
-        }
-        
-        .error .btn-primary {
-            margin-top: 2rem;
-        }
-        
-        /* Thèmes */
-        .light-theme {
-            background-color: #fff;
-            color: #333;
-        }
-        
-        .dark-theme {
-            background-color: #222;
-            color: #f5f5f5;
-        }
-        
-        .colorful-theme {
-            background: linear-gradient(135deg, #3498db, #8e44ad);
-            color: #fff;
-        }
-        
-        .minimal-theme {
-            background-color: #f8f9fa;
-            color: #333;
-        }
-        
-        /* Tons */
-        .dramatic-tone .preview-element h1,
-        .dramatic-tone .preview-element h2,
-        .dramatic-tone .preview-element h3 {
-            font-family: 'Georgia', serif;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
-        }
-        
-        .ironic-tone .preview-element {
-            font-style: italic;
-        }
-        
-        .cringe-tone .preview-element {
-            font-family: 'Comic Sans MS', cursive;
-        }
-        
-        .classy-tone .preview-element {
-            font-family: 'Playfair Display', serif;
-        }
-        
-        .touching-tone .preview-element {
-            font-family: 'Roboto', sans-serif;
-            line-height: 1.8;
-        }
-        
-        .absurd-tone .preview-element {
-            transform: rotate(-1deg);
-        }
-        
-        .passive-aggressive-tone .preview-element {
-            font-family: 'Arial', sans-serif;
-            font-style: italic;
-        }
-        
-        .honest-tone .preview-element {
-            font-family: 'Courier New', monospace;
-        }
-    </style>
-</head>
-<body>
-    <div class="view-container" id="view-container">
-        <div class="loading" id="loading">
-            <p>Chargement de la page...</p>
-        </div>
-    </div>
-    
-    <a href="index.html" class="back-to-home">
-        <i class="fas fa-arrow-left"></i> Retour à l'accueil
-    </a>
-    
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            const viewContainer = document.getElementById('view-container');
-            const loading = document.getElementById('loading');
-            
-            // Récupérer l'ID de la page depuis l'URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const pageId = urlParams.get('id');
-            
-            if (!pageId) {
-                showError('ID de page non spécifié. Impossible de charger la page.');
-                return;
-            }
-            
-            // Charger les données de la page (dans une application réelle, cela serait récupéré depuis un serveur)
-            const pageData = localStorage.getItem(`page_${pageId}`);
-            
-            if (!pageData) {
-                showError('Page introuvable. Elle a peut-être été supprimée ou l\'ID est incorrect.');
-                return;
-            }
-            
-            try {
-                const parsedData = JSON.parse(pageData);
-                renderPage(parsedData);
-            } catch (e) {
-                console.error('Erreur lors du chargement de la page:', e);
-                showError('Erreur lors du chargement de la page. Veuillez réessayer.');
-            }
-        });
-        
-        function renderPage(pageData) {
-            const viewContainer = document.getElementById('view-container');
-            const loading = document.getElementById('loading');
-            
-            // Appliquer le thème et le ton
-            viewContainer.className = `view-container ${pageData.theme}-theme ${pageData.tone}-tone`;
-            
-            // Créer le conteneur de la page
-            const pageContainer = document.createElement('div');
-            pageContainer.className = 'preview-page';
-            pageContainer.style.position = 'relative';
-            pageContainer.style.width = '100%';
-            pageContainer.style.height = '100%';
-            
-            // Ajouter les éléments
-            pageData.elements.forEach(elementData => {
-                const element = document.createElement('div');
-                element.className = 'preview-element';
-                element.style.position = 'absolute';
-                element.style.top = elementData.style.top;
-                element.style.left = elementData.style.left;
-                element.style.width = elementData.style.width || 'auto';
-                element.style.height = elementData.style.height || 'auto';
-                element.style.backgroundColor = elementData.style.backgroundColor || 'transparent';
-                element.style.color = elementData.style.color || 'inherit';
-                element.style.padding = elementData.style.padding || '1rem';
-                
-                // Ajouter le contenu sans les contrôles
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = elementData.content;
-                
-                // Supprimer les contrôles s'ils existent
-                const controls = tempDiv.querySelector('.element-controls');
-                if (controls) controls.remove();
-                
-                element.innerHTML = tempDiv.innerHTML;
-                pageContainer.appendChild(element);
-            });
-            
-            // Remplacer le chargement par la page
-            viewContainer.removeChild(loading);
-            viewContainer.appendChild(pageContainer);
-            
-            // Ajouter le titre de la page
-            document.title = pageData.title + ' - PageDépart';
-        }
-        
-        function showError(message) {
-            const viewContainer = document.getElementById('view-container');
-            const loading = document.getElementById('loading');
-            
-            const errorDiv = document.createElement('div');
-            errorDiv.className = 'error';
-            errorDiv.innerHTML = `
-                <p>${message}</p>
-                <a href="index.html" class="btn-primary">Retour à l'accueil</a>
-            `;
-            
-            viewContainer.removeChild(loading);
-            viewContainer.appendChild(errorDiv);
-        }
 
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Page Partagée - TheEnd.page</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+        <style>
+            /* Styles spécifiques pour la vue partagée */
+            .shared-page {
+                max-width: 1200px;
+                margin: 0 auto;
+                padding: 2rem;
+            }
 
+            .shared-header {
+                text-align: center;
+                margin-bottom: 2rem;
+            }
 
-        
-    </script>
-</body>
+            .shared-content {
+                position: relative;
+                min-height: 800px;
+                background: #fff;
+                border-radius: 8px;
+                padding: 2rem;
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            }
+
+            .preview-element {
+                position: absolute;
+                cursor: default;
+            }
+
+            .preview-element img {
+                max-width: 100%;
+                height: auto;
+            }
+
+            .preview-element video,
+            .preview-element iframe {
+                width: 100%;
+                height: 100%;
+            }
+
+            .preview-element h1,
+            .preview-element h2,
+            .preview-element h3,
+            .preview-element h4,
+            .preview-element p {
+                margin: 0;
+                padding: 0;
+            }
+
+            /* Thèmes */
+            .light-theme {
+                background-color: #fff;
+                color: #333;
+            }
+
+            .dark-theme {
+                background-color: #222;
+                color: #f5f5f5;
+            }
+
+            .colorful-theme {
+                background: linear-gradient(135deg, #3498db, #8e44ad);
+                color: #fff;
+            }
+
+            .minimal-theme {
+                background-color: #f8f9fa;
+                color: #333;
+            }
+
+            /* Tons */
+            .dramatic-tone .preview-element h1,
+            .dramatic-tone .preview-element h2,
+            .dramatic-tone .preview-element h3 {
+                font-family: 'Georgia', serif;
+                text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            }
+
+            .ironic-tone .preview-element {
+                font-style: italic;
+            }
+
+            .cringe-tone .preview-element {
+                font-family: 'Comic Sans MS', cursive;
+            }
+
+            .classy-tone .preview-element {
+                font-family: 'Playfair Display', serif;
+            }
+
+            .touching-tone .preview-element {
+                font-family: 'Roboto', sans-serif;
+                line-height: 1.8;
+            }
+
+            .absurd-tone .preview-element {
+                transform: rotate(-1deg);
+            }
+
+            .passive-aggressive-tone .preview-element {
+                font-family: 'Arial', sans-serif;
+                font-style: italic;
+            }
+
+            .honest-tone .preview-element {
+                font-family: 'Courier New', monospace;
+            }
+        </style>
+    </head>
+
+    <body>
+        <header>
+            <nav>
+                <a href="{{ url_for('main.index') }}">Accueil</a>
+                <a href="{{ url_for('main.editeur') }}">Éditeur</a>
+                <a href="{{ url_for('main.feed') }}">Feed</a>
+            </nav>
+
+            <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="{{ url_for('static', filename='Logo.png') }}" alt="Logo de TheEnd.page" style="height: 60px;">
+                <h1 style="margin: 0;">TheEnd.page</h1>
+            </div>
+        </header>
+
+        <main class="shared-page">
+            <div class="shared-header">
+                <h1 id="page-title">Chargement...</h1>
+            </div>
+            <div class="shared-content" id="page-content">
+                <!-- Le contenu sera chargé dynamiquement -->
+            </div>
+        </main>
+
+        <footer>
+            <div class="footer-content">
+                <p>&copy; 2025 TheEnd.page. Tous droits réservés.</p>
+            </div>
+        </footer>
+
+        <script>
+            // Fonction pour charger la page
+            async function loadPage() {
+                const path = window.location.pathname;
+                const match = path.match(/\/page\/([^\/]+)/);
+
+                if (match) {
+                    const slug = match[1];
+                    try {
+                        const response = await fetch(`/api/page/${slug}`);
+                        const result = await response.json();
+
+                        if (result.status === 'success') {
+                            const page = result.page;
+
+                            // Mettre à jour le titre
+                            document.title = `${page.title} - TheEnd.page`;
+                            document.getElementById('page-title').textContent = page.title;
+
+                            // Appliquer le thème et le ton
+                            document.body.className = '';
+                            document.body.classList.add(`${page.theme}-theme`);
+                            document.body.classList.add(`${page.tone}-tone`);
+
+                            // Charger les éléments
+                            const content = document.getElementById('page-content');
+                            content.innerHTML = ''; // Vider le contenu
+
+                            // Get elements from either content.elements or elements array
+                            const elements = page.content?.elements || page.elements || [];
+
+                            if (elements.length > 0) {
+                                elements.forEach(element => {
+                                    const elementDiv = document.createElement('div');
+                                    elementDiv.className = 'preview-element';
+
+                                    // Clean and prepare the HTML content
+                                    let html = '';
+                                    if (element.content?.html) {
+                                        // Remove any undefined text
+                                        html = element.content.html.replace(/undefined/g, '');
+                                    }
+
+                                    // If no valid HTML, create appropriate content
+                                    if (!html || html.trim() === '') {
+                                        switch (element.type) {
+                                            case 'video':
+                                                html = '<div class="video-placeholder">Vidéo</div>';
+                                                break;
+                                            case 'audio':
+                                                html = '<div class="audio-placeholder">Audio</div>';
+                                                break;
+                                            case 'gif':
+                                                html = '<div class="gif-placeholder">GIF</div>';
+                                                break;
+                                            case 'heading':
+                                                html = '<h2>Nouveau titre</h2>';
+                                                break;
+                                            case 'paragraph':
+                                                html = '<p>Nouveau paragraphe</p>';
+                                                break;
+                                            case 'image':
+                                                html = '<img src="https://via.placeholder.com/300x200" alt="Image">';
+                                                break;
+                                            case 'button':
+                                                html = '<button class="btn-primary">Nouveau bouton</button>';
+                                                break;
+                                            default:
+                                                html = `<div>${element.type}</div>`;
+                                        }
+                                    }
+
+                                    // Create a temporary div to clean the HTML
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = html;
+
+                                    // Remove any remaining undefined text
+                                    const textNodes = [];
+                                    const walk = document.createTreeWalker(
+                                        tempDiv,
+                                        NodeFilter.SHOW_TEXT,
+                                        null,
+                                        false
+                                    );
+
+                                    let node;
+                                    while (node = walk.nextNode()) {
+                                        if (node.textContent.includes('undefined')) {
+                                            textNodes.push(node);
+                                        }
+                                    }
+
+                                    textNodes.forEach(node => {
+                                        node.textContent = node.textContent.replace(/undefined/g, '');
+                                    });
+
+                                    // Remove control buttons and resize handles
+                                    const controls = tempDiv.querySelector('.element-controls');
+                                    if (controls) controls.remove();
+
+                                    const handles = tempDiv.querySelectorAll('.resize-handle');
+                                    handles.forEach(handle => handle.remove());
+
+                                    const toolbar = tempDiv.querySelector('.mini-toolbar');
+                                    if (toolbar) toolbar.remove();
+
+                                    // Set the cleaned HTML
+                                    elementDiv.innerHTML = tempDiv.innerHTML;
+
+                                    // Apply styles
+                                    const style = element.content?.style || element.style || {};
+                                    Object.assign(elementDiv.style, style);
+
+                                    content.appendChild(elementDiv);
+                                });
+                            }
+                        } else {
+                            console.error('Error loading page:', result.message);
+                            document.getElementById('page-title').textContent = 'Page non trouvée';
+                        }
+                    } catch (error) {
+                        console.error('Error loading page:', error);
+                        document.getElementById('page-title').textContent = 'Erreur de chargement';
+                    }
+                }
+            }
+
+            // Charger la page au chargement
+            document.addEventListener('DOMContentLoaded', loadPage);
+        </script>
+    </body>
+
 </html>
