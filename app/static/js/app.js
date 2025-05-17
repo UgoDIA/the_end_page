@@ -1518,4 +1518,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
     shareModal.style.display = 'none';
     showDefaultProperties();
+
+    // Gestion de la réinitialisation
+    resetBtn.addEventListener('click', () => {
+        resetConfirm.style.display = 'flex';
+    });
+
+    resetCancel.addEventListener('click', () => {
+        resetConfirm.style.display = 'none';
+    });
+
+    resetConfirmBtn.addEventListener('click', () => {
+        // Supprimer tous les éléments du canvas
+        const canvasElements = canvas.querySelectorAll('.canvas-element');
+        canvasElements.forEach(element => element.remove());
+        
+        // Réinitialiser le compteur d'éléments
+        elementCounter = 0;
+        
+        // Réinitialiser l'élément sélectionné
+        selectedElement = null;
+        
+        // Réinitialiser le panneau de propriétés
+        showDefaultProperties();
+        
+        // Ajouter le texte d'espace réservé
+        canvas.innerHTML = '<div class="placeholder-text">Glissez et déposez des éléments ici pour créer votre page</div>';
+        
+        // Fermer la modal de confirmation
+        resetConfirm.style.display = 'none';
+        
+        // Jouer le son de sauvegarde
+        playSound('save');
+    });
 });
