@@ -32,6 +32,7 @@
 
         <section id="editeur" class="editor-section">
             <h2>Créez votre page</h2>
+            
             <div class="editor-container">
                 <div class="editor-sidebar">
                     <h3>Éléments</h3>
@@ -64,6 +65,11 @@
                             <i class="fas fa-film"></i>
                             <span>GIF</span>
                         </div>
+                    </div>
+                    
+                    <!-- Galerie de blocs -->
+                    <div class="blocks-gallery">
+                        <!-- Suppression du titre et des blocs rapides -->
                     </div>
                     
                     <h3>Style</h3>
@@ -115,6 +121,24 @@
                 <button id="reset-btn" class="btn-danger"><i class="fas fa-trash"></i> Réinitialiser</button>
             </div>
         </section>
+        
+        <!-- Assistant virtuel -->
+        <div class="virtual-assistant">
+            <div class="assistant-header">
+                <div class="assistant-title">Assistant de création</div>
+                <button id="disable-assistant" class="assistant-btn disable-btn">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="assistant-message">
+                Bienvenue ! Commençons par choisir un titre accrocheur pour votre page.
+            </div>
+            <div class="assistant-actions">
+                <button id="next-tip" class="assistant-btn next-btn">
+                    Suivant <i class="fas fa-arrow-right"></i>
+                </button>
+            </div>
+        </div>
         
         <section id="apropos" class="about-section">
             <h2>À propos de PageDépart</h2>
@@ -169,5 +193,10 @@
             </div>
         </div>
     </div>
+
+    <!-- Sons pour le feedback -->
+    <audio id="add-sound" src="sounds/add.mp3" preload="auto"></audio>
+    <audio id="edit-sound" src="sounds/edit.mp3" preload="auto"></audio>
+    <audio id="save-sound" src="sounds/save.mp3" preload="auto"></audio>
 </body>
 </html>

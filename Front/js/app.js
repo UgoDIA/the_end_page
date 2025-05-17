@@ -21,6 +21,21 @@ document.addEventListener('DOMContentLoaded', function() {
     let selectedElement = null;
     let elementCounter = 0;
     
+    // Sons pour le feedback
+    const sounds = {
+        add: new Audio('sounds/add.mp3'),
+        edit: new Audio('sounds/edit.mp3'),
+        save: new Audio('sounds/save.mp3')
+    };
+
+    // Fonction pour jouer un son
+    function playSound(soundName) {
+        if (sounds[soundName]) {
+            sounds[soundName].currentTime = 0;
+            sounds[soundName].play().catch(() => {});
+        }
+    }
+
     // Gestionnaire d'événement pour le bouton de réinitialisation
     resetBtn.addEventListener('click', () => {
         resetConfirm.style.display = 'flex';
@@ -53,6 +68,18 @@ document.addEventListener('DOMContentLoaded', function() {
     canvas.addEventListener('dragover', dragOver);
     canvas.addEventListener('drop', drop);
     
+    // Correction : Initialisation du drag and drop pour les blocs rapides
+    const blockTemplates = document.querySelectorAll('.block-template');
+    blockTemplates.forEach(template => {
+        template.addEventListener('dragstart', dragStart);
+        template.addEventListener('dragstart', (e) => {
+            template.classList.add('preview');
+        });
+        template.addEventListener('dragend', () => {
+            template.classList.remove('preview');
+        });
+    });
+    
     // Fonctions de glisser-déposer
     function dragStart(e) {
         e.dataTransfer.setData('text/plain', e.target.dataset.type);
@@ -80,7 +107,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const x = e.clientX - canvasRect.left;
         const y = e.clientY - canvasRect.top;
         
-        createCanvasElement(elementType, x, y);
+        if (elementType.startsWith('hero-') || elementType === 'testimonial' || 
+            elementType === 'quote' || elementType === 'footer') {
+            createPredefinedBlock(elementType, x, y);
+        } else {
+            createCanvasElement(elementType, x, y);
+        }
     }
     
     // Création d'un élément sur la toile
@@ -171,6 +203,8 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Sélectionner automatiquement le nouvel élément
         selectElement.call(element);
+        addMiniToolbar(element);
+        playSound('add');
     }
     
     // Rendre un élément déplaçable
@@ -838,5 +872,264 @@ document.addEventListener('DOMContentLoaded', function() {
             // Rendre l'élément déplaçable
             makeElementDraggable(element);
         });
+    }
+
+    // Fonction pour ajouter le mini-toolbar à un élément
+    function addMiniToolbar(element) {
+        const toolbar = document.createElement('div');
+        toolbar.className = 'mini-toolbar';
+        toolbar.innerHTML = `
+            <div class="toolbar-dropdown">
+                <button class="toolbar-btn" title="Police">
+                    <i class="fas fa-font"></i>
+                </button>
+                <div class="toolbar-dropdown-content">
+                    <select class="font-select">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Helvetica">Helvetica</option>
+                    </select>
+                </div>
+            </div>
+            <div class="toolbar-dropdown">
+                <button class="toolbar-btn" title="Taille">
+                    <i class="fas fa-text-height"></i>
+                </button>
+                <div class="toolbar-dropdown-content">
+                    <input type="range" min="12" max="72" value="16" class="size-slider">
+                </div>
+            </div>
+            <button class="toolbar-btn" title="Gras">
+                <i class="fas fa-bold"></i>
+            </button>
+            <button class="toolbar-btn" title="Italique">
+                <i class="fas fa-italic"></i>
+            </button>
+            <div class="toolbar-dropdown">
+                <button class="toolbar-btn" title="Couleur">
+                    <i class="fas fa-palette"></i>
+                </button>
+                <div class="toolbar-dropdown-content">
+                    <input type="color" class="color-picker">
+                </div>
+            </div>
+            <button class="toolbar-btn" title="Alignement gauche">
+                <i class="fas fa-align-left"></i>
+            </button>
+            <button class="toolbar-btn" title="Alignement centre">
+                <i class="fas fa-align-center"></i>
+            </button>
+            <button class="toolbar-btn" title="Alignement droite">
+                <i class="fas fa-align-right"></i>
+            </button>
+        `;
+        element.appendChild(toolbar);
+
+        // Ajouter les écouteurs d'événements pour le toolbar
+        const buttons = toolbar.querySelectorAll('.toolbar-btn');
+        buttons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const action = btn.title.toLowerCase();
+                applyToolbarAction(element, action);
+                playSound('edit');
+            });
+        });
+
+        // Gérer les changements de police
+        const fontSelect = toolbar.querySelector('.font-select');
+        if (fontSelect) {
+            fontSelect.addEventListener('change', (e) => {
+                element.style.fontFamily = e.target.value;
+                playSound('edit');
+            });
+        }
+
+        // Gérer les changements de taille
+        const sizeSlider = toolbar.querySelector('.size-slider');
+        if (sizeSlider) {
+            sizeSlider.addEventListener('input', (e) => {
+                element.style.fontSize = `${e.target.value}px`;
+                playSound('edit');
+            });
+        }
+
+        // Gérer les changements de couleur
+        const colorPicker = toolbar.querySelector('.color-picker');
+        if (colorPicker) {
+            colorPicker.addEventListener('input', (e) => {
+                element.style.color = e.target.value;
+                playSound('edit');
+            });
+        }
+    }
+
+    // Fonction pour appliquer une action du toolbar
+    function applyToolbarAction(element, action) {
+        const content = element.querySelector('p, h1, h2, h3, h4');
+        if (!content) return;
+
+        switch(action) {
+            case 'gras':
+                content.style.fontWeight = content.style.fontWeight === 'bold' ? 'normal' : 'bold';
+                break;
+            case 'italique':
+                content.style.fontStyle = content.style.fontStyle === 'italic' ? 'normal' : 'italic';
+                break;
+            case 'alignement gauche':
+                content.style.textAlign = 'left';
+                break;
+            case 'alignement centre':
+                content.style.textAlign = 'center';
+                break;
+            case 'alignement droite':
+                content.style.textAlign = 'right';
+                break;
+        }
+    }
+
+    // Gestionnaire pour l'assistant virtuel
+    const assistant = document.querySelector('.virtual-assistant');
+    const nextTipBtn = document.getElementById('next-tip');
+    const disableAssistantBtn = document.getElementById('disable-assistant');
+    let currentStep = 1;
+
+    const tips = [
+        "Bienvenue ! Donnez un titre accrocheur à votre page pour commencer.",
+        "Ajoutez des images, vidéos ou textes pour enrichir votre page.",
+        "Personnalisez les couleurs, la mise en page et le style selon vos envies.",
+        "Finalisez votre page : vérifiez le rendu, sauvegardez ou partagez-la !"
+    ];
+
+    function updateAssistant() {
+        const message = assistant.querySelector('.assistant-message');
+        message.textContent = tips[currentStep - 1];
+        // Afficher ou masquer le bouton suivant selon l'étape
+        if (currentStep === tips.length) {
+            nextTipBtn.textContent = 'Terminer';
+        } else {
+            nextTipBtn.textContent = 'Suivant →';
+        }
+    }
+
+    nextTipBtn.addEventListener('click', () => {
+        if (currentStep < tips.length) {
+            currentStep++;
+            updateAssistant();
+        } else {
+            // À la dernière étape, fermer l'assistant
+            assistant.style.display = 'none';
+        }
+    });
+
+    disableAssistantBtn.addEventListener('click', () => {
+        assistant.style.display = 'none';
+    });
+
+    // Fonction pour créer des blocs prédéfinis
+    function createPredefinedBlock(type, x, y) {
+        let content = '';
+        switch(type) {
+            case 'hero-dramatic':
+                content = `
+                    <div class="hero-block" style="background: linear-gradient(45deg, #2c3e50, #34495e); color: white; padding: 2rem; text-align: center;">
+                        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Titre Accrocheur</h1>
+                        <p style="font-size: 1.2rem;">Sous-titre percutant</p>
+                    </div>
+                `;
+                break;
+            case 'testimonial':
+                content = `
+                    <div class="testimonial-block" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+                        <img src="https://via.placeholder.com/100" alt="Photo" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 1rem;">
+                        <blockquote style="font-style: italic; margin-bottom: 1rem;">"Une citation émouvante qui touche le cœur."</blockquote>
+                        <p style="font-weight: bold;">- Auteur</p>
+                    </div>
+                `;
+                break;
+            case 'quote':
+                content = `
+                    <div class="quote-block" style="text-align: center; padding: 2rem;">
+                        <h2 style="font-size: 2rem; margin-bottom: 1rem;">"Une phrase percutante"</h2>
+                        <p style="font-style: italic;">- Citation mémorable</p>
+                    </div>
+                `;
+                break;
+            case 'footer':
+                content = `
+                    <div class="footer-block" style="background: #2c3e50; color: white; padding: 2rem; text-align: center;">
+                        <h3 style="margin-bottom: 1rem;">Conclusion Mémorable</h3>
+                        <p>Un dernier message qui restera gravé</p>
+                    </div>
+                `;
+                break;
+            case 'presentation':
+                content = `
+                    <div class="presentation-block" style="background: #e3f2fd; padding: 1.5rem; border-radius: 8px;">
+                        <h2>Présentation</h2>
+                        <p>Bonjour, je m'appelle <strong>Votre Nom</strong> et je vous présente mon projet !</p>
+                    </div>
+                `;
+                break;
+            case 'list':
+                content = `
+                    <div class="list-block" style="background: #f9f9f9; padding: 1.5rem; border-radius: 8px;">
+                        <h3>Liste de points importants</h3>
+                        <ul>
+                            <li>Premier point clé</li>
+                            <li>Deuxième point clé</li>
+                            <li>Troisième point clé</li>
+                        </ul>
+                    </div>
+                `;
+                break;
+            case 'contact':
+                content = `
+                    <div class="contact-block" style="background: #fffbe6; padding: 1.5rem; border-radius: 8px; border: 1px solid #ffe082;">
+                        <h3>Contact</h3>
+                        <p>Email : <a href="mailto:exemple@email.com">exemple@email.com</a></p>
+                        <p>Téléphone : 06 12 34 56 78</p>
+                    </div>
+                `;
+                break;
+            case 'inspiration-quote':
+                content = `
+                    <div class="inspiration-quote-block" style="background: #f0f4c3; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                        <blockquote style="font-size: 1.3rem; font-style: italic;">"Le succès n'est pas la clé du bonheur. Le bonheur est la clé du succès."</blockquote>
+                        <p>- Albert Schweitzer</p>
+                    </div>
+                `;
+                break;
+            case 'image-caption':
+                content = `
+                    <div class="image-caption-block" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                        <img src="https://via.placeholder.com/300x200" alt="Image illustrative" style="max-width: 100%; border-radius: 6px; margin-bottom: 0.5rem;">
+                        <div class="caption" style="color: #555; font-size: 1rem;">Légende de l'image</div>
+                    </div>
+                `;
+                break;
+        }
+
+        const element = document.createElement('div');
+        element.className = 'canvas-element';
+        element.style.position = 'absolute';
+        element.style.left = `${x}px`;
+        element.style.top = `${y}px`;
+        element.innerHTML = content;
+
+        // Ajouter les contrôles
+        const controls = document.createElement('div');
+        controls.className = 'element-controls';
+        controls.innerHTML = `
+            <div class="control-btn edit-btn" title="Modifier"><i class="fas fa-edit"></i></div>
+            <div class="control-btn delete-btn" title="Supprimer"><i class="fas fa-trash"></i></div>
+        `;
+        element.appendChild(controls);
+
+        canvas.appendChild(element);
+        addMiniToolbar(element);
+        makeElementDraggable(element);
+        makeElementResizable(element);
+        playSound('add');
     }
 });
