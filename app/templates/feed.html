@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PageDépart – Actualités</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  </head>
+
+  <body>
+    <header>
+      <nav>
+        <a href="{{ url_for('main.index') }}" class="active">Accueil</a>
+        <a href="{{ url_for('main.editeur') }}">Éditeur</a>
+      </nav>
+      <div class="logo">
+        <img src="{{ url_for('static', filename='Logo.png') }}" alt="Logo de TheEnd.page">
+        <h1>TheEnd.page</h1>
+      </div>
+    </header>
+
+    <main class="feed">
+      <!-- Exemple de post -->
+      <article class="post">
+        <div class="votes">
+          <button class="up"><i class="fas fa-chevron-up"></i></button>
+          <span class="count">128</span>
+          <button class="down"><i class="fas fa-chevron-down"></i></button>
+        </div>
+        <div class="content">
+          <h2 class="title">Titre de l'actualité n°1</h2>
+          <p class="meta">par <strong>utilisateur1</strong> dans <em>r/actualites</em> · 2 h</p>
+          <p class="excerpt">Voici un petit extrait de l'article ou de la publication pour donner envie de cliquer…</p>
+        </div>
+      </article>
+
+      <!-- Dupliquez <article class="post"> pour chaque actualité -->
+      <article class="post">
+        <div class="votes">
+          <button class="up"><i class="fas fa-chevron-up"></i></button>
+          <span class="count">47</span>
+          <button class="down"><i class="fas fa-chevron-down"></i></button>
+        </div>
+        <div class="content">
+          <h2 class="title">Deuxième titre d'actualité</h2>
+          <p class="meta">par <strong>utilisateur2</strong> dans <em>r/technologie</em> · 5 h</p>
+          <p class="excerpt">Un autre bref résumé pour illustrer le contenu du post…</p>
+        </div>
+      </article>
+
+      <!-- … -->
+    </main>
+
+    <footer>
+      <div class="footer-content">
+        <p>&copy; 2025 TheEnd.page. Tous droits réservés.</p>
+      </div>
+    </footer>
+
+    <!-- Modal de partage -->
+    <div class="modal" id="share-modal">
+      <div class="modal-content">
+        <span class="close-modal">&times;</span>
+        <h3>Partagez votre page</h3>
+        <p>Utilisez ce lien pour partager votre page de départ :</p>
+        <div class="share-link-container">
+          <input type="text" id="share-link" readonly>
+          <button id="copy-link-btn"><i class="fas fa-copy"></i></button>
+        </div>
+        <div class="social-share">
+          <button class="social-btn facebook"><i class="fab fa-facebook-f"></i></button>
+          <button class="social-btn twitter"><i class="fab fa-twitter"></i></button>
+          <button class="social-btn whatsapp"><i class="fab fa-whatsapp"></i></button>
+        </div>
+      </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  </body>
+
+</html>

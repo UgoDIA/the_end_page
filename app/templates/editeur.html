@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="fr">
+
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>PageDépart - Créez votre page de départ personnalisée</title>
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    </head>
+
+    <body>
+        <header>
+            <nav>
+                <a href="{{ url_for('main.index') }}">Accueil</a>
+                <a href="{{ url_for('main.editeur') }}">Éditeur</a>
+                <a href="{{ url_for('main.feed') }}">Feed</a>
+            </nav>
+
+            <div class="logo" style="display: flex; align-items: center; gap: 10px;">
+                <img src="{{ url_for('static', filename='Logo.png') }}" alt="Logo de TheEnd.page" style="height: 60px;">
+                <h1 style="margin: 0;">TheEnd.page</h1>
+            </div>
+        </header>
+
+        <main>
+            <section id="editeur" class="editor-section">
+                <h2>Créez votre page</h2>
+                <div class="editor-container">
+                    <div class="editor-sidebar">
+                        <h3>Éléments</h3>
+                        <div class="elements-container">
+                            <div class="element" draggable="true" data-type="heading">
+                                <i class="fas fa-heading"></i>
+                                <span>Titre</span>
+                            </div>
+                            <div class="element" draggable="true" data-type="paragraph">
+                                <i class="fas fa-paragraph"></i>
+                                <span>Paragraphe</span>
+                            </div>
+                            <div class="element" draggable="true" data-type="image">
+                                <i class="fas fa-image"></i>
+                                <span>Image</span>
+                            </div>
+                            <div class="element" draggable="true" data-type="button">
+                                <i class="fas fa-square"></i>
+                                <span>Bouton</span>
+                            </div>
+                            <div class="element" draggable="true" data-type="video">
+                                <i class="fas fa-video"></i>
+                                <span>Vidéo</span>
+                            </div>
+                            <div class="element" draggable="true" data-type="audio">
+                                <i class="fas fa-music"></i>
+                                <span>Audio</span>
+                            </div>
+                            <div class="element" draggable="true" data-type="gif">
+                                <i class="fas fa-film"></i>
+                                <span>GIF</span>
+                            </div>
+                        </div>
+
+                        <!-- Galerie de blocs -->
+                        <div class="blocks-gallery">
+                            <!-- Suppression du titre et des blocs rapides -->
+                        </div>
+
+                        <h3>Style</h3>
+                        <div class="style-options">
+                            <div class="option-group">
+                                <label for="theme-select">Thème</label>
+                                <select id="theme-select">
+                                    <option value="light">Clair</option>
+                                    <option value="dark">Sombre</option>
+                                    <option value="colorful">Coloré</option>
+                                    <option value="minimal">Minimaliste</option>
+                                </select>
+                            </div>
+
+                            <div class="option-group">
+                                <label for="tone-select">Ton narratif</label>
+                                <select id="tone-select">
+                                    <option value="dramatic">Dramatique</option>
+                                    <option value="ironic">Ironique</option>
+                                    <option value="cringe">Cringe</option>
+                                    <option value="classy">Classe</option>
+                                    <option value="touching">Touchant</option>
+                                    <option value="absurd">Absurde</option>
+                                    <option value="passive-aggressive">Passif-agressif</option>
+                                    <option value="honest">Honnête</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="editor-canvas">
+                        <div class="canvas-container" id="canvas">
+                            <div class="placeholder-text">Glissez et déposez des éléments ici pour créer votre page
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="editor-properties" id="properties-panel">
+                        <h3><span class="panel-title-icon">🛠</span>Propriétés</h3>
+                        <div class="properties-content">
+                            <div class="accordion-section open">
+                                <div class="accordion-header">Dimensions <span class="chevron">▶</span></div>
+                                <div class="accordion-content">
+                                    <div class="property-group">
+                                        <label for="element-width">Largeur <span class="icon tooltip">🔒<span
+                                                    class="tooltip-content">Verrouiller la largeur</span></span></label>
+                                        <input type="text" id="element-width">
+                                    </div>
+                                    <div class="property-group">
+                                        <label for="element-height">Hauteur <span class="icon tooltip">🔒<span
+                                                    class="tooltip-content">Verrouiller la hauteur</span></span></label>
+                                        <input type="text" id="element-height">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="accordion-section open">
+                                <div class="accordion-header">Texte <span class="chevron">▶</span></div>
+                                <div class="accordion-content">
+                                    <!-- Champs dynamiques selon le type d'élément (à remplir par JS) -->
+                                </div>
+                            </div>
+                            <div class="accordion-section open">
+                                <div class="accordion-header">Style <span class="chevron">▶</span></div>
+                                <div class="accordion-content">
+                                    <div class="property-group">
+                                        <label for="element-bg-color">Couleur de fond <span class="icon tooltip">🎨<span
+                                                    class="tooltip-content">Changer la couleur de
+                                                    fond</span></span></label>
+                                        <input type="color" id="element-bg-color">
+                                    </div>
+                                    <div class="property-group">
+                                        <label for="element-text-color">Couleur du texte <span
+                                                class="icon tooltip">🎨<span class="tooltip-content">Changer la couleur
+                                                    du texte</span></span></label>
+                                        <input type="color" id="element-text-color">
+                                    </div>
+                                    <div class="property-group">
+                                        <label for="element-padding">Espacement interne <span
+                                                class="icon tooltip">ℹ️<span class="tooltip-content">Padding interne de
+                                                    l'élément</span></span></label>
+                                        <input type="text" id="element-padding">
+                                    </div>
+                                </div>
+                            </div>
+                            <button id="apply-properties">Appliquer</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="editor-actions">
+
+                    <button id="save-btn" class="btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
+                    <button id="share-btn" class="btn-primary"><i class="fas fa-share-alt"></i> Partager</button>
+                    <button id="reset-btn" class="btn-danger"><i class="fas fa-trash"></i> Réinitialiser</button>
+                </div>
+            </section>
+
+            <!-- Assistant virtuel -->
+            <div class="virtual-assistant">
+                <div class="assistant-header">
+                    <div class="assistant-title">Assistant de création</div>
+                    <button id="disable-assistant" class="assistant-btn disable-btn">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="assistant-message">
+                    Bienvenue ! Commençons par choisir un titre accrocheur pour votre page.
+                </div>
+                <div class="assistant-actions">
+                    <button id="next-tip" class="assistant-btn next-btn">
+                        Suivant <i class="fas fa-arrow-right"></i>
+                    </button>
+                </div>
+            </div>
+
+        </main>
+
+        <!-- Modal de partage -->
+        <div class="modal" id="share-modal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h3>Partagez votre page</h3>
+                <p>Utilisez ce lien pour partager votre page de départ :</p>
+                <div class="share-link-container">
+                    <input type="text" id="share-link" readonly>
+                    <button id="copy-link-btn"><i class="fas fa-copy"></i></button>
+                </div>
+                <div class="social-share">
+                    <button class="social-btn facebook"><i class="fab fa-facebook-f"></i></button>
+                    <button class="social-btn twitter"><i class="fab fa-twitter"></i></button>
+                    <button class="social-btn whatsapp"><i class="fab fa-whatsapp"></i></button>
+                </div>
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+
+        <!-- Popup de confirmation personnalisé -->
+        <div class="custom-confirm" id="reset-confirm">
+            <div class="custom-confirm-content">
+                <div class="custom-confirm-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <h3 class="custom-confirm-title">Attention !</h3>
+                <p class="custom-confirm-message">Êtes-vous sûr de vouloir réinitialiser la page ? Cette action
+                    supprimera définitivement tous les éléments et ne pourra pas être annulée.</p>
+                <div class="custom-confirm-buttons">
+                    <button class="custom-confirm-btn cancel" id="reset-cancel">Annuler</button>
+                    <button class="custom-confirm-btn confirm" id="reset-confirm-btn">Réinitialiser</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sons pour le feedback -->
+        <audio id="add-sound" src="{{ url_for('static', filename='sounds/add.mp3') }}" preload="auto"></audio>
+        <audio id="edit-sound" src="{{ url_for('static', filename='sounds/edit.mp3') }}" preload="auto"></audio>
+        <audio id="save-sound" src="{{ url_for('static', filename='sounds/save.mp3') }}" preload="auto"></audio>
+    </body>
+
+</html>
+
+
+</section>
+</main>
+
+<footer>
+    <div class="footer-content">
+        <p>&copy; 2025 TheEnd.page. Tous droits réservés.</p>
+    </div>
+</footer>
+
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+
+</html>

@@ -1,4 +1,10 @@
-document.addEventListener('DOMContentLoaded', function() {
+let isInitialized = false;
+
+document.addEventListener('DOMContentLoaded', function () {
+    // Prevent multiple initializations
+    if (isInitialized) return;
+    isInitialized = true;
+
     // Éléments DOM
     const canvas = document.getElementById('canvas');
     const elements = document.querySelectorAll('.element');
@@ -17,10 +23,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const shareLink = document.getElementById('share-link');
     const copyLinkBtn = document.getElementById('copy-link-btn');
     const previewContainer = document.getElementById('preview-container');
-    
+
     let selectedElement = null;
     let elementCounter = 0;
-    
+
     // Sons pour le feedback
     const sounds = {
         add: new Audio('sounds/add.mp3'),
@@ -32,54 +38,130 @@ document.addEventListener('DOMContentLoaded', function() {
     function playSound(soundName) {
         if (sounds[soundName]) {
             sounds[soundName].currentTime = 0;
-            sounds[soundName].play().catch(() => {});
+            sounds[soundName].play().catch(() => { });
         }
     }
 
-    // Gestionnaire d'événement pour le bouton de réinitialisation
-    resetBtn.addEventListener('click', () => {
-        resetConfirm.style.display = 'flex';
-    });
-
-    // Gestionnaire pour le bouton Annuler
-    resetCancel.addEventListener('click', () => {
-        resetConfirm.style.display = 'none';
-    });
-
-    // Gestionnaire pour le bouton Confirmer
-    resetConfirmBtn.addEventListener('click', () => {
-        // Effacer le canvas
-        canvas.innerHTML = '<div class="placeholder-text">Glissez et déposez des éléments ici pour créer votre page</div>';
-        // Réinitialiser le compteur d'éléments
-        elementCounter = 0;
-        // Réinitialiser l'élément sélectionné
-        selectedElement = null;
-        // Afficher les propriétés par défaut
-        showDefaultProperties();
-        // Fermer le popup
-        resetConfirm.style.display = 'none';
-    });
-    
     // Initialisation du glisser-déposer
+    let isDraggingFromShelf = false;
+    let dragInProgress = false;
+    let lastDropTime = 0;
+
+    // Remove all existing drag and drop event listeners
+    const removeDragDropListeners = (element) => {
+        const newElement = element.cloneNode(true);
+        element.parentNode.replaceChild(newElement, element);
+        return newElement;
+    };
+
+    // Reattach drag and drop event listeners
+    const attachDragDropListeners = (element) => {
+        element.addEventListener('dragstart', (e) => {
+            if (dragInProgress) return;
+            dragInProgress = true;
+            isDraggingFromShelf = true;
+            e.stopPropagation();
+            console.log('Drag Start:', {
+                element: e.target,
+                type: e.target.dataset.type,
+                isDraggingFromShelf,
+                dragInProgress
+            });
+            dragStart(e);
+        });
+
+        element.addEventListener('dragend', (e) => {
+            e.stopPropagation();
+            console.log('Drag End:', {
+                element: e.target,
+                type: e.target.dataset.type,
+                isDraggingFromShelf,
+                dragInProgress
+            });
+            dragInProgress = false;
+            isDraggingFromShelf = false;
+        });
+    };
+
+    // Clean up and reattach listeners for all elements
     elements.forEach(element => {
-        element.addEventListener('dragstart', dragStart);
+        const newElement = removeDragDropListeners(element);
+        attachDragDropListeners(newElement);
     });
-    
-    canvas.addEventListener('dragover', dragOver);
-    canvas.addEventListener('drop', drop);
-    
-    // Correction : Initialisation du drag and drop pour les blocs rapides
-    const blockTemplates = document.querySelectorAll('.block-template');
-    blockTemplates.forEach(template => {
-        template.addEventListener('dragstart', dragStart);
-        template.addEventListener('dragstart', (e) => {
-            template.classList.add('preview');
-        });
-        template.addEventListener('dragend', () => {
-            template.classList.remove('preview');
-        });
+
+    // Set up canvas drop handling
+    canvas.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        canvas.classList.add('drag-over');
     });
-    
+
+    canvas.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        canvas.classList.remove('drag-over');
+
+        console.log('Drop Event:', {
+            isDraggingFromShelf,
+            dragInProgress,
+            timeSinceLastDrop: Date.now() - lastDropTime,
+            elementType: e.dataTransfer.getData('text/plain')
+        });
+
+        // Prevent multiple drops within 500ms
+        const now = Date.now();
+        if (now - lastDropTime < 500) {
+            console.log('Drop prevented: Too soon after last drop');
+            return;
+        }
+        lastDropTime = now;
+
+        // Prevent multiple drops
+        if (!isDraggingFromShelf || !dragInProgress) {
+            console.log('Drop prevented: Invalid drag state', {
+                isDraggingFromShelf,
+                dragInProgress
+            });
+            return;
+        }
+
+        // Reset drag state
+        dragInProgress = false;
+        isDraggingFromShelf = false;
+
+        // Supprimer le texte d'espace réservé si c'est le premier élément
+        const placeholder = canvas.querySelector('.placeholder-text');
+        if (placeholder) {
+            placeholder.remove();
+        }
+
+        const elementType = e.dataTransfer.getData('text/plain');
+        if (!elementType) {
+            console.log('Drop prevented: No element type');
+            return;
+        }
+
+        // Calculer la position exacte dans le canvas
+        const canvasRect = canvas.getBoundingClientRect();
+        const x = e.clientX - canvasRect.left;
+        const y = e.clientY - canvasRect.top;
+
+        console.log('Creating element:', {
+            type: elementType,
+            position: { x, y }
+        });
+
+        // Create element with a small delay to prevent double creation
+        setTimeout(() => {
+            if (elementType.startsWith('hero-') || elementType === 'testimonial' ||
+                elementType === 'quote' || elementType === 'footer') {
+                createPredefinedBlock(elementType, x, y);
+            } else {
+                createCanvasElement(elementType, x, y);
+            }
+        }, 50);
+    });
+
     // Fonctions de glisser-déposer
     function dragStart(e) {
         // Ne pas démarrer le glissement si on clique sur un contrôle ou sur une image déjà existante
@@ -91,46 +173,12 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         e.dataTransfer.setData('text/plain', e.target.dataset.type);
     }
-    
-    function dragOver(e) {
-        e.preventDefault();
-        canvas.classList.add('drag-over');
-    }
-    
-    function drop(e) {
-        e.preventDefault();
-        canvas.classList.remove('drag-over');
-        // Supprimer le texte d'espace réservé si c'est le premier élément
-        const placeholder = canvas.querySelector('.placeholder-text');
-        if (placeholder) {
-            placeholder.remove();
-        }
-        const elementType = e.dataTransfer.getData('text/plain');
-        // Correction : ne créer un nouvel élément que si le drag vient de la sidebar (élément original)
-        // Si le drag vient d'un élément déjà sur le canvas, ne rien faire
-        const dragged = document.querySelector('.canvas-element.dragging');
-        if (dragged) {
-            // On repositionne simplement l'élément, pas de création
-            dragged.classList.remove('dragging');
-            return;
-        }
-        // Calculer la position exacte dans le canvas
-        const canvasRect = canvas.getBoundingClientRect();
-        const x = e.clientX - canvasRect.left;
-        const y = e.clientY - canvasRect.top;
-        if (elementType.startsWith('hero-') || elementType === 'testimonial' || 
-            elementType === 'quote' || elementType === 'footer') {
-            createPredefinedBlock(elementType, x, y);
-        } else {
-            createCanvasElement(elementType, x, y);
-        }
-    }
-    
+
     // Création d'un élément sur la toile
     function createCanvasElement(type, x, y) {
         elementCounter++;
         const id = `element-${elementCounter}`;
-        
+
         const element = document.createElement('div');
         element.id = id;
         element.className = 'canvas-element';
@@ -139,7 +187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         element.style.left = `${x}px`;
         element.style.top = `${y}px`;
         element.style.cursor = 'move';
-        
+
         // Ajouter les poignées de redimensionnement
         const resizeHandles = ['nw', 'ne', 'sw', 'se'].map(pos => {
             const handle = document.createElement('div');
@@ -147,7 +195,7 @@ document.addEventListener('DOMContentLoaded', function() {
             handle.dataset.position = pos;
             return handle;
         });
-        
+
         // Contenu par défaut selon le type
         let content = '';
         switch (type) {
@@ -175,7 +223,7 @@ document.addEventListener('DOMContentLoaded', function() {
             default:
                 content = '<div>Élément</div>';
         }
-        
+
         // Contrôles de l'élément
         const controls = `
             <div class="element-controls">
@@ -183,11 +231,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="control-btn delete-btn" title="Supprimer"><i class="fas fa-trash"></i></div>
             </div>
         `;
-        
+
         element.innerHTML = content + controls;
         resizeHandles.forEach(handle => element.appendChild(handle));
         canvas.appendChild(element);
-        
+
         // Ajouter les écouteurs d'événements
         element.addEventListener('click', selectElement);
         element.querySelector('.edit-btn').addEventListener('click', (e) => {
@@ -205,19 +253,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 showDefaultProperties();
             }
         });
-        
+
         // Rendre l'élément déplaçable
         makeElementDraggable(element);
-        
+
         // Ajouter la fonctionnalité de redimensionnement
         makeElementResizable(element);
-        
+
         // Sélectionner automatiquement le nouvel élément
         selectElement.call(element);
         addMiniToolbar(element);
         playSound('add');
     }
-    
+
     // Rendre un élément déplaçable
     function makeElementDraggable(element) {
         let isDragging = false;
@@ -265,12 +313,12 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     }
-    
+
     // Fonction pour rendre un élément redimensionnable
     function makeElementResizable(element) {
         const handles = element.querySelectorAll('.resize-handle');
         const type = element.dataset.type;
-        
+
         // Définir les limites de taille selon le type d'élément
         const sizeLimits = {
             heading: { minWidth: 100, minHeight: 40, maxWidth: 800, maxHeight: 200 },
@@ -281,42 +329,42 @@ document.addEventListener('DOMContentLoaded', function() {
             audio: { minWidth: 200, minHeight: 50, maxWidth: 400, maxHeight: 100 },
             gif: { minWidth: 100, minHeight: 100, maxWidth: 500, maxHeight: 500 }
         };
-        
+
         const limits = sizeLimits[type] || { minWidth: 50, minHeight: 50, maxWidth: 800, maxHeight: 600 };
-        
+
         handles.forEach(handle => {
             handle.addEventListener('mousedown', initResize);
         });
-        
+
         function initResize(e) {
             e.preventDefault();
             e.stopPropagation();
-            
+
             const handle = e.target;
             const position = handle.dataset.position;
             const elementRect = element.getBoundingClientRect();
             const canvasRect = canvas.getBoundingClientRect();
-            
+
             let startX = e.clientX;
             let startY = e.clientY;
             let startWidth = elementRect.width;
             let startHeight = elementRect.height;
             let startLeft = elementRect.left - canvasRect.left;
             let startTop = elementRect.top - canvasRect.top;
-            
+
             function resize(e) {
                 e.preventDefault();
-                
+
                 const deltaX = e.clientX - startX;
                 const deltaY = e.clientY - startY;
-                
+
                 let newWidth = startWidth;
                 let newHeight = startHeight;
                 let newLeft = startLeft;
                 let newTop = startTop;
-                
+
                 // Calculer les nouvelles dimensions selon la poignée utilisée
-                switch(position) {
+                switch (position) {
                     case 'se':
                         newWidth = startWidth + deltaX;
                         newHeight = startHeight + deltaY;
@@ -338,43 +386,43 @@ document.addEventListener('DOMContentLoaded', function() {
                         newTop = startTop + deltaY;
                         break;
                 }
-                
+
                 // Appliquer les limites de taille
                 newWidth = Math.max(limits.minWidth, Math.min(newWidth, limits.maxWidth));
                 newHeight = Math.max(limits.minHeight, Math.min(newHeight, limits.maxHeight));
-                
+
                 // Appliquer les limites de position
                 newLeft = Math.max(0, Math.min(newLeft, canvasRect.width - newWidth));
                 newTop = Math.max(0, Math.min(newTop, canvasRect.height - newHeight));
-                
+
                 // Appliquer les nouvelles dimensions
                 element.style.width = `${newWidth}px`;
                 element.style.height = `${newHeight}px`;
                 element.style.left = `${newLeft}px`;
                 element.style.top = `${newTop}px`;
-                
+
                 // Ajuster le contenu
                 adjustContent(element, newWidth, newHeight);
             }
-            
+
             function stopResize() {
                 document.removeEventListener('mousemove', resize);
                 document.removeEventListener('mouseup', stopResize);
             }
-            
+
             document.addEventListener('mousemove', resize);
             document.addEventListener('mouseup', stopResize);
         }
     }
-    
+
     // Fonction pour ajuster le contenu lors du redimensionnement
     function adjustContent(element, width, height) {
         const type = element.dataset.type;
         const content = element.querySelector('img, video, iframe, p, h1, h2, h3, h4, button');
-        
+
         if (!content) return;
-        
-        switch(type) {
+
+        switch (type) {
             case 'image':
                 if (content.tagName === 'IMG') {
                     content.style.maxWidth = '100%';
@@ -397,7 +445,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     content.style.height = '100%';
                     content.style.wordWrap = 'break-word';
                     content.style.overflow = 'auto';
-                    
+
                     // Ajuster la taille de la police en fonction de la largeur
                     const fontSize = Math.max(12, Math.min(24, width / 20));
                     content.style.fontSize = `${fontSize}px`;
@@ -409,7 +457,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     content.style.height = '100%';
                     content.style.whiteSpace = 'normal';
                     content.style.wordWrap = 'break-word';
-                    
+
                     // Ajuster la taille de la police en fonction de la largeur
                     const fontSize = Math.max(12, Math.min(18, width / 15));
                     content.style.fontSize = `${fontSize}px`;
@@ -417,27 +465,27 @@ document.addEventListener('DOMContentLoaded', function() {
                 break;
         }
     }
-    
+
     // Sélectionner un élément
     function selectElement() {
         // Désélectionner l'élément précédent
         if (selectedElement) {
             selectedElement.classList.remove('selected');
         }
-        
+
         // Sélectionner le nouvel élément
         this.classList.add('selected');
         selectedElement = this;
-        
+
         // Afficher les propriétés
         showProperties(this);
     }
-    
+
     // Afficher les propriétés d'un élément
     function showProperties(element) {
         const type = element.dataset.type;
         let propertiesHTML = `<h4>Propriétés de ${getTypeName(type)}</h4>`;
-        
+
         // Propriétés communes
         // Suppression des champs de largeur et hauteur
         // propertiesHTML += `
@@ -450,7 +498,7 @@ document.addEventListener('DOMContentLoaded', function() {
         //         <input type="text" id="element-height" value="${element.style.height || 'auto'}">
         //     </div>
         // `;
-        
+
         // Propriétés spécifiques au type
         switch (type) {
             case 'heading': {
@@ -593,7 +641,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 `;
                 break;
         }
-        
+
         // Propriétés de style communes
         propertiesHTML += `
             <h4>Style</h4>
@@ -607,9 +655,9 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
             <button id="apply-properties" class="btn-primary">Appliquer</button>
         `;
-        
+
         propertiesContent.innerHTML = propertiesHTML;
-        
+
         // Ajouter l'écouteur d'événement pour le bouton Appliquer
         document.getElementById('apply-properties').addEventListener('click', () => {
             applyProperties(element);
@@ -618,7 +666,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Ajout : mise à jour en temps réel des couleurs depuis le panneau de propriétés
         bindLiveStyleProperties(element);
     }
-    
+
     // Appliquer les propriétés à un élément
     function applyProperties(element) {
         const type = element.dataset.type;
@@ -676,7 +724,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (!/^https?:\/\//i.test(url)) {
                             url = 'https://' + url;
                         }
-                        btn.onclick = function(e) {
+                        btn.onclick = function (e) {
                             e.stopPropagation();
                             e.preventDefault();
                             window.open(url, '_blank');
@@ -686,10 +734,10 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     // Appliquer la couleur au survol
                     btn.style.transition = 'background-color 0.3s, color 0.3s';
-                    btn.onmouseover = function() {
+                    btn.onmouseover = function () {
                         this.style.backgroundColor = buttonHoverColor;
                     };
-                    btn.onmouseout = function() {
+                    btn.onmouseout = function () {
                         this.style.backgroundColor = '';
                     };
                 }
@@ -737,7 +785,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
                 break;
         }
-        
+
         // Réattacher les écouteurs d'événements
         element.querySelector('.edit-btn').addEventListener('click', (e) => {
             e.stopPropagation();
@@ -757,12 +805,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Vider le panneau de propriétés après application
         showDefaultProperties();
     }
-    
+
     // Afficher les propriétés par défaut
     function showDefaultProperties() {
         propertiesContent.innerHTML = '<p class="no-selection">Sélectionnez un élément pour modifier ses propriétés</p>';
     }
-    
+
     // Obtenir le nom du type d'élément
     function getTypeName(type) {
         const typeNames = {
@@ -776,7 +824,7 @@ document.addEventListener('DOMContentLoaded', function() {
         };
         return typeNames[type] || 'Élément';
     }
-    
+
     // Gestion des modales
     shareBtn.addEventListener('click', () => {
         // Générer un lien de partage
@@ -784,25 +832,25 @@ document.addEventListener('DOMContentLoaded', function() {
         const shareId = generateShareId();
         // Simuler le stockage (dans une application réelle, cela serait stocké dans une base de données)
         localStorage.setItem(`page_${shareId}`, JSON.stringify(pageData));
-        
+
         // Afficher le lien
         const shareUrl = `${window.location.origin}/view.html?id=${shareId}`;
         shareLink.value = shareUrl;
         shareModal.style.display = 'flex';
     });
-    
+
     closeModalBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             shareModal.style.display = 'none';
         });
     });
-    
+
     copyLinkBtn.addEventListener('click', () => {
         shareLink.select();
         document.execCommand('copy');
         alert('Lien copié dans le presse-papiers !');
     });
-    
+
     // Sauvegarder les données de la page
     function savePageData() {
         const elements = [];
@@ -821,7 +869,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             });
         });
-        
+
         return {
             title: 'Ma page de départ',
             theme: document.getElementById('theme-select').value,
@@ -829,26 +877,26 @@ document.addEventListener('DOMContentLoaded', function() {
             elements: elements
         };
     }
-    
+
     // Générer un ID de partage
     function generateShareId() {
         return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     }
-    
+
     // Appliquer le thème sélectionné
-    document.getElementById('theme-select').addEventListener('change', function() {
+    document.getElementById('theme-select').addEventListener('change', function () {
         const theme = this.value;
         document.body.className = ''; // Réinitialiser les classes
         document.body.classList.add(`${theme}-theme`);
     });
-    
+
     // Sauvegarder la page
     saveBtn.addEventListener('click', () => {
         const pageData = savePageData();
         localStorage.setItem('saved_page', JSON.stringify(pageData));
         alert('Page sauvegardée avec succès !');
     });
-    
+
     // Charger une page sauvegardée (si disponible)
     const savedPage = localStorage.getItem('saved_page');
     if (savedPage) {
@@ -859,16 +907,16 @@ document.addEventListener('DOMContentLoaded', function() {
             console.error('Erreur lors du chargement de la page sauvegardée:', e);
         }
     }
-    
+
     // Charger les données de la page
     function loadPageData(pageData) {
         // Appliquer le thème et le ton
         document.getElementById('theme-select').value = pageData.theme;
         document.getElementById('tone-select').value = pageData.tone;
-        
+
         // Effacer le canvas
         canvas.innerHTML = '';
-        
+
         // Ajouter les éléments
         pageData.elements.forEach(elementData => {
             const element = document.createElement('div');
@@ -882,10 +930,10 @@ document.addEventListener('DOMContentLoaded', function() {
             element.style.backgroundColor = elementData.style.backgroundColor;
             element.style.color = elementData.style.color;
             element.style.padding = elementData.style.padding;
-            
+
             // Ajouter le contenu sans les contrôles
             element.innerHTML = elementData.content;
-            
+
             // Ajouter les contrôles
             const controls = document.createElement('div');
             controls.className = 'element-controls';
@@ -894,9 +942,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="control-btn delete-btn" title="Supprimer"><i class="fas fa-trash"></i></div>
             `;
             element.appendChild(controls);
-            
+
             canvas.appendChild(element);
-            
+
             // Ajouter les écouteurs d'événements
             element.addEventListener('click', selectElement);
             element.querySelector('.edit-btn').addEventListener('click', (e) => {
@@ -914,7 +962,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     showDefaultProperties();
                 }
             });
-            
+
             // Rendre l'élément déplaçable
             makeElementDraggable(element);
         });
@@ -1015,7 +1063,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const content = element.querySelector('p, h1, h2, h3, h4');
         if (!content) return;
 
-        switch(action) {
+        switch (action) {
             case 'gras':
                 content.style.fontWeight = content.style.fontWeight === 'bold' ? 'normal' : 'bold';
                 break;
@@ -1075,7 +1123,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Fonction pour créer des blocs prédéfinis
     function createPredefinedBlock(type, x, y) {
         let content = '';
-        switch(type) {
+        switch (type) {
             case 'hero-dramatic':
                 content = `
                     <div class="hero-block" style="background: linear-gradient(45deg, #2c3e50, #34495e); color: white; padding: 2rem; text-align: center;">
@@ -1414,7 +1462,7 @@ document.addEventListener('DOMContentLoaded', function() {
         iframe.style.borderRadius = '0 0 12px 12px';
         // Gestion d'erreur de chargement
         let errorShown = false;
-        iframe.onerror = iframe.onload = function() {
+        iframe.onerror = iframe.onload = function () {
             // Si l'iframe reste vide après 1s, afficher l'erreur
             setTimeout(() => {
                 if (!iframe.contentDocument || iframe.contentDocument.body.innerHTML === '' || iframe.contentWindow.location.href === 'about:blank') {
@@ -1450,7 +1498,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     // Ajouter l'écouteur d'événement pour le bouton de fermeture
-    document.addEventListener('click', function(event) {
+    document.addEventListener('click', function (event) {
         if (event.target.id === 'close-preview') {
             previewModal.style.display = 'none';
         }
@@ -1468,4 +1516,6 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     document.head.appendChild(style);
 
+    shareModal.style.display = 'none';
+    showDefaultProperties();
 });
