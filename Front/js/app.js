@@ -7,6 +7,10 @@ document.addEventListener('DOMContentLoaded', function() {
     const previewBtn = document.getElementById('preview-btn');
     const saveBtn = document.getElementById('save-btn');
     const shareBtn = document.getElementById('share-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const resetConfirm = document.getElementById('reset-confirm');
+    const resetCancel = document.getElementById('reset-cancel');
+    const resetConfirmBtn = document.getElementById('reset-confirm-btn');
     const shareModal = document.getElementById('share-modal');
     const previewModal = document.getElementById('preview-modal');
     const closeModalBtns = document.querySelectorAll('.close-modal');
@@ -16,6 +20,30 @@ document.addEventListener('DOMContentLoaded', function() {
     
     let selectedElement = null;
     let elementCounter = 0;
+    
+    // Gestionnaire d'événement pour le bouton de réinitialisation
+    resetBtn.addEventListener('click', () => {
+        resetConfirm.style.display = 'flex';
+    });
+
+    // Gestionnaire pour le bouton Annuler
+    resetCancel.addEventListener('click', () => {
+        resetConfirm.style.display = 'none';
+    });
+
+    // Gestionnaire pour le bouton Confirmer
+    resetConfirmBtn.addEventListener('click', () => {
+        // Effacer le canvas
+        canvas.innerHTML = '<div class="placeholder-text">Glissez et déposez des éléments ici pour créer votre page</div>';
+        // Réinitialiser le compteur d'éléments
+        elementCounter = 0;
+        // Réinitialiser l'élément sélectionné
+        selectedElement = null;
+        // Afficher les propriétés par défaut
+        showDefaultProperties();
+        // Fermer le popup
+        resetConfirm.style.display = 'none';
+    });
     
     // Initialisation du glisser-déposer
     elements.forEach(element => {
