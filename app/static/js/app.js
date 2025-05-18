@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Sélectionner automatiquement le nouvel élément
         selectElement.call(element);
-      
+
         playSound('add');
     }
 
@@ -867,9 +867,9 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Sauvegarder les données de la page
     function savePageData() {
-        const elements = [];
-        canvas.querySelectorAll('.canvas-element').forEach((element, index) => {
-            elements.push({
+        const title = document.getElementById('page-title').value || 'Sans titre';
+        const elements = Array.from(canvas.children).map(element => {
+            return {
                 type: element.dataset.type,
                 content: {
                     html: element.innerHTML,
@@ -883,12 +883,12 @@ document.addEventListener('DOMContentLoaded', function () {
                         padding: element.style.padding
                     }
                 },
-                position: index + 1
-            });
+                position: Array.from(canvas.children).indexOf(element) + 1
+            };
         });
 
         return {
-            title: document.querySelector('.page-title')?.textContent || 'Sans titre',
+            title: title,
             slug: generateSlug(),
             theme: document.body.dataset.theme || 'light',
             tone: document.body.dataset.tone || 'honest',
@@ -964,6 +964,7 @@ document.addEventListener('DOMContentLoaded', function () {
     // Charger les données de la page
     function loadPageData(pageData) {
         // Appliquer le thème et le ton
+        document.getElementById('page-title').value = pageData.title || '';
         document.getElementById('theme-select').value = pageData.theme;
         document.getElementById('tone-select').value = pageData.tone;
 
