@@ -942,13 +942,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Appliquer le thème sélectionné
-    document.getElementById('theme-select').addEventListener('change', function () {
-        const theme = this.value;
-        document.body.className = ''; // Réinitialiser les classes
-        document.body.classList.add(`${theme}-theme`);
-    });
-
-
+    const themeSelect = document.getElementById('theme-select');
+    if (themeSelect) {
+        themeSelect.addEventListener('change', function () {
+            const theme = this.value;
+            document.body.className = ''; // Réinitialiser les classes
+            document.body.classList.add(`${theme}-theme`);
+        });
+    }
 
     // Charger une page sauvegardée (si disponible)
     const savedPage = localStorage.getItem('saved_page');
@@ -964,9 +965,20 @@ document.addEventListener('DOMContentLoaded', function () {
     // Charger les données de la page
     function loadPageData(pageData) {
         // Appliquer le thème et le ton
-        document.getElementById('page-title').value = pageData.title || '';
-        document.getElementById('theme-select').value = pageData.theme;
-        document.getElementById('tone-select').value = pageData.tone;
+        const pageTitle = document.getElementById('page-title');
+        if (pageTitle) {
+            pageTitle.value = pageData.title || '';
+        }
+
+        const themeSelect = document.getElementById('theme-select');
+        if (themeSelect) {
+            themeSelect.value = pageData.theme;
+        }
+
+        const toneSelect = document.getElementById('tone-select');
+        if (toneSelect) {
+            toneSelect.value = pageData.tone;
+        }
 
         // Effacer le canvas
         canvas.innerHTML = '';
@@ -1180,81 +1192,81 @@ document.addEventListener('DOMContentLoaded', function () {
         switch (type) {
             case 'hero-dramatic':
                 content = `
-                    <div class="hero-block" style="background: linear-gradient(45deg, #2c3e50, #34495e); color: white; padding: 2rem; text-align: center;">
-                        <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Titre Accrocheur</h1>
-                        <p style="font-size: 1.2rem;">Sous-titre percutant</p>
-                    </div>
-                `;
+                <div class="hero-block" style="background: linear-gradient(45deg, #2c3e50, #34495e); color: white; padding: 2rem; text-align: center;">
+                    <h1 style="font-size: 2.5rem; margin-bottom: 1rem;">Titre Accrocheur</h1>
+                    <p style="font-size: 1.2rem;">Sous-titre percutant</p>
+                </div>
+            `;
                 break;
             case 'testimonial':
                 content = `
-                    <div class="testimonial-block" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
-                        <img src="https://via.placeholder.com/100" alt="Photo" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 1rem;">
-                        <blockquote style="font-style: italic; margin-bottom: 1rem;">"Une citation émouvante qui touche le cœur."</blockquote>
-                        <p style="font-weight: bold;">- Auteur</p>
-                    </div>
-                `;
+                <div class="testimonial-block" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px;">
+                    <img src="https://via.placeholder.com/100" alt="Photo" style="width: 100px; height: 100px; border-radius: 50%; margin-bottom: 1rem;">
+                    <blockquote style="font-style: italic; margin-bottom: 1rem;">"Une citation émouvante qui touche le cœur."</blockquote>
+                    <p style="font-weight: bold;">- Auteur</p>
+                </div>
+            `;
                 break;
             case 'quote':
                 content = `
-                    <div class="quote-block" style="text-align: center; padding: 2rem;">
-                        <h2 style="font-size: 2rem; margin-bottom: 1rem;">"Une phrase percutante"</h2>
-                        <p style="font-style: italic;">- Citation mémorable</p>
-                    </div>
-                `;
+                <div class="quote-block" style="text-align: center; padding: 2rem;">
+                    <h2 style="font-size: 2rem; margin-bottom: 1rem;">"Une phrase percutante"</h2>
+                    <p style="font-style: italic;">- Citation mémorable</p>
+                </div>
+            `;
                 break;
             case 'footer':
                 content = `
-                    <div class="footer-block" style="background: #2c3e50; color: white; padding: 2rem; text-align: center;">
-                        <h3 style="margin-bottom: 1rem;">Conclusion Mémorable</h3>
-                        <p>Un dernier message qui restera gravé</p>
-                    </div>
-                `;
+                <div class="footer-block" style="background: #2c3e50; color: white; padding: 2rem; text-align: center;">
+                    <h3 style="margin-bottom: 1rem;">Conclusion Mémorable</h3>
+                    <p>Un dernier message qui restera gravé</p>
+                </div>
+            `;
                 break;
             case 'presentation':
                 content = `
-                    <div class="presentation-block" style="background: #e3f2fd; padding: 1.5rem; border-radius: 8px;">
-                        <h2>Présentation</h2>
-                        <p>Bonjour, je m'appelle <strong>Votre Nom</strong> et je vous présente mon projet !</p>
-                    </div>
-                `;
+                <div class="presentation-block" style="background: #e3f2fd; padding: 1.5rem; border-radius: 8px;">
+                    <h2>Présentation</h2>
+                    <p>Bonjour, je m'appelle <strong>Votre Nom</strong> et je vous présente mon projet !</p>
+                </div>
+            `;
                 break;
             case 'list':
                 content = `
-                    <div class="list-block" style="background: #f9f9f9; padding: 1.5rem; border-radius: 8px;">
-                        <h3>Liste de points importants</h3>
-                        <ul>
-                            <li>Premier point clé</li>
-                            <li>Deuxième point clé</li>
-                            <li>Troisième point clé</li>
-                        </ul>
-                    </div>
-                `;
+                <div class="list-block" style="background: #f9f9f9; padding: 1.5rem; border-radius: 8px;">
+                    <h3>Liste de points importants</h3>
+                    <ul>
+                        <li>Premier point clé</li>
+                        <li>Deuxième point clé</li>
+                        <li>Troisième point clé</li>
+                    </ul>
+                </div>
+            `;
                 break;
             case 'contact':
                 content = `
-                    <div class="contact-block" style="background: #fffbe6; padding: 1.5rem; border-radius: 8px; border: 1px solid #ffe082;">
-                        <h3>Contact</h3>
-                        <p>Email : <a href="mailto:exemple@email.com">exemple@email.com</a></p>
-                        <p>Téléphone : 06 12 34 56 78</p>
-                    </div>
-                `;
+                <div class="contact-block" style="background: #fffbe6; padding: 1.5rem; border-radius: 8px; border: 1px solid #ffe082;">
+                    <h3>Contact</h3>
+                    <p>Email : <a href="mailto:exemple@email.com">exemple@email.com</a></p>
+                    <p>Téléphone : 06 12 34 56 78</p>
+                </div>
+            `;
                 break;
             case 'inspiration-quote':
                 content = `
-                    <div class="inspiration-quote-block" style="background: #f0f4c3; padding: 1.5rem; border-radius: 8px; text-align: center;">
-                        <blockquote style="font-size: 1.3rem; font-style: italic;">"Le succès n'est pas la clé du bonheur. Le bonheur est la clé du succès."</blockquote>
-                        <p>- Albert Schweitzer</p>
-                    </div>
-                `;
+                <div class="inspiration-quote-block" style="background: #f0f4c3; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                    <blockquote style="font-size: 1.3rem; font-style: italic;">"Le succès n'est pas la clé du bonheur. Le bonheur est la clé du succès."</blockquote>
+                    <p>- Albert Schweitzer</p>
+                </div>
+            `;
                 break;
             case 'image-caption':
                 content = `
-                    <div class="image-caption-block" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; text-align: center;">
-                        <img src="https://via.placeholder.com/300x200" alt="Image illustrative" style="max-width: 100%; border-radius: 6px; margin-bottom: 0.5rem;">
-                        <div class="caption" style="color: #555; font-size: 1rem;">Légende de l'image</div>
-                    </div>
-                `;
+                <div class="image-caption-block" style="background: #f8f9fa; padding: 1.5rem; border-radius: 8px; text-align: center;">
+                    <img src="https://via.placeholder.com/300x200" alt="Image illustrative" style="max-width: 100%; border-radius: 6px; margin-bottom: 0.5rem;">
+                    <div class="caption" style="color: #555; font-size: 1rem;">Légende de l'image</div>
+                </div>
+            `;
                 break;
         }
 
@@ -1575,16 +1587,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Gestion de la réinitialisation
     resetBtn.addEventListener('click', () => {
+        console.log('Reset button clicked');
+        console.log('Reset confirm modal element:', resetConfirm);
+        console.log('Reset confirm modal display style:', resetConfirm.style.display);
         resetConfirm.style.display = 'flex';
+        console.log('Reset confirm modal display style after setting:', resetConfirm.style.display);
     });
 
     resetCancel.addEventListener('click', () => {
+        console.log('Reset cancel button clicked');
         resetConfirm.style.display = 'none';
     });
 
     resetConfirmBtn.addEventListener('click', () => {
+        console.log('Reset confirm button clicked');
         // Supprimer tous les éléments du canvas
         const canvasElements = canvas.querySelectorAll('.canvas-element');
+        console.log('Number of elements to remove:', canvasElements.length);
         canvasElements.forEach(element => element.remove());
 
         // Réinitialiser le compteur d'éléments

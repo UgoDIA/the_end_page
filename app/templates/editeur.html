@@ -9,6 +9,74 @@
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <link rel="icon" href="{{ url_for('static', filename='Logo.ico') }}" type="image/x-icon">
         <link href="https://fonts.googleapis.com/css2?family=Tagesschrift&display=swap" rel="stylesheet">
+        <style>
+            .custom-confirm {
+                display: none;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                background-color: rgba(0, 0, 0, 0.5);
+                z-index: 1000;
+                justify-content: center;
+                align-items: center;
+            }
+
+            .custom-confirm-content {
+                background-color: white;
+                padding: 2rem;
+                border-radius: 8px;
+                max-width: 400px;
+                width: 90%;
+                text-align: center;
+            }
+
+            .custom-confirm-icon {
+                font-size: 3rem;
+                color: #e74c3c;
+                margin-bottom: 1rem;
+            }
+
+            .custom-confirm-title {
+                margin: 0 0 1rem 0;
+                color: #2c3e50;
+            }
+
+            .custom-confirm-message {
+                margin: 0 0 1.5rem 0;
+                color: #34495e;
+            }
+
+            .custom-confirm-buttons {
+                display: flex;
+                justify-content: center;
+                gap: 1rem;
+            }
+
+            .custom-confirm-btn {
+                padding: 0.5rem 1.5rem;
+                border: none;
+                border-radius: 4px;
+                cursor: pointer;
+                font-weight: bold;
+                transition: background-color 0.3s;
+            }
+
+            .custom-confirm-btn.cancel {
+                background-color: #95a5a6;
+                color: white;
+            }
+
+            .custom-confirm-btn.confirm {
+                background-color: #e74c3c;
+                color: white;
+            }
+
+            .custom-confirm-btn:hover {
+                opacity: 0.9;
+            }
+        </style>
     </head>
 
     <body>
@@ -30,11 +98,18 @@
                 <h2>Créez votre page</h2>
                 <div class="editor-container">
                     <div class="editor-sidebar">
-                    <h3>Titre</h3>
+                        <h3>Titre</h3>
                         <div class="page-title-container">
                             <input type="text" id="page-title" class="page-title-input"
                                 placeholder="Titre de votre page">
                         </div>
+                        <!-- Hidden theme select to prevent JS errors -->
+                        <select id="theme-select" style="display: none;">
+                            <option value="light">Clair</option>
+                        </select>
+                        <select id="tone-select" style="display: none;">
+                            <option value="honest">Honnête</option>
+                        </select>
                         <h3>Éléments</h3>
                         <div class="elements-container">
                             <div class="element" draggable="true" data-type="heading">
@@ -202,8 +277,6 @@
             </div>
         </div>
 
-        <script src="{{ url_for('static', filename='js/app.js') }}"></script>
-
         <!-- Popup de confirmation personnalisé -->
         <div class="custom-confirm" id="reset-confirm">
             <div class="custom-confirm-content">
@@ -224,21 +297,79 @@
         <audio id="add-sound" src="{{ url_for('static', filename='sounds/add.mp3') }}" preload="auto"></audio>
         <audio id="edit-sound" src="{{ url_for('static', filename='sounds/edit.mp3') }}" preload="auto"></audio>
         <audio id="save-sound" src="{{ url_for('static', filename='sounds/save.mp3') }}" preload="auto"></audio>
+
+        <!-- Scripts -->
+        <script>
+            // Initialize reset functionality
+            document.addEventListener('DOMContentLoaded', function () {
+                const resetBtn = document.getElementById('reset-btn');
+                const resetConfirm = document.getElementById('reset-confirm');
+                const resetCancel = document.getElementById('reset-cancel');
+                const resetConfirmBtn = document.getElementById('reset-confirm-btn');
+                const canvas = document.getElementById('canvas');
+
+                if (resetBtn && resetConfirm && resetCancel && resetConfirmBtn) {
+                    resetBtn.addEventListener('click', () => {
+                        console.log('Reset button clicked');
+                        resetConfirm.style.display = 'flex';
+                    });
+
+                    resetCancel.addEventListener('click', () => {
+                        console.log('Reset cancel button clicked');
+                        resetConfirm.style.display = 'none';
+                    });
+
+                    resetConfirmBtn.addEventListener('click', () => {
+                        console.log('Reset confirm button clicked');
+                        // Remove all canvas elements
+                        const canvasElements = canvas.querySelectorAll('.canvas-element');
+                        canvasElements.forEach(element => element.remove());
+
+                        // Reset element counter
+                        window.elementCounter = 0;
+
+                        // Reset selected element
+                        window.selectedElement = null;
+
+                        // Reset properties panel
+                        const propertiesContent = document.querySelector('.properties-content');
+                        if (propertiesContent) {
+                            propertiesContent.innerHTML = '<p class="no-selection">Sélectionnez un élément pour modifier ses propriétés</p>';
+                        }
+
+                        // Add placeholder text
+                        canvas.innerHTML = '<div class="placeholder-text">Glissez et déposez des éléments ici pour créer votre page</div>';
+
+                        // Close confirmation modal
+                        resetConfirm.style.display = 'none';
+
+                        // Play save sound
+                        const saveSound = document.getElementById('save-sound');
+                        if (saveSound) {
+                            saveSound.currentTime = 0;
+                            saveSound.play().catch(() => { });
+                        }
+                    });
+                } else {
+                    console.error('Reset elements not found:', {
+                        resetBtn: !!resetBtn,
+                        resetConfirm: !!resetConfirm,
+                        resetCancel: !!resetCancel,
+                        resetConfirmBtn: !!resetConfirmBtn
+                    });
+                }
+            });
+        </script>
+        <script src="{{ url_for('static', filename='js/app.js') }}"></script>
     </body>
 
 </html>
-
-
-</section>
-</main>
 
 <footer>
     <div class="footer-content">
         <p>&copy; 2025 TheEnd.page. Tous droits réservés.</p>
     </div>
 </footer>
-
-<script src="{{ url_for('static', filename='js/app.js') }}"></script>
 </body>
 
 </html>
