@@ -262,7 +262,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
         // Sélectionner automatiquement le nouvel élément
         selectElement.call(element);
-        addMiniToolbar(element);
+      
         playSound('add');
     }
 

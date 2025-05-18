@@ -1552,8 +1552,8 @@ nav {
     color: #fff;
   }
   
-  /* Logo */
-  .logo {
+/* Logo */
+.logo {
     max-width: 100%;
     display: flex;
     align-items: center;
@@ -1569,6 +1569,34 @@ nav {
     max-width: 100%;
 }
 
+@media (max-width: 784px) {
+    header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1rem;
+    }
+
+    nav {
+        flex: 1;
+        justify-content: flex-start;
+        gap: 1rem;
+        padding: 0;
+    }
+
+    .logo {
+        flex: none;
+        order: 2;
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .logo h1 {
+        display: none;
+    }
+}
   
   /* Post */
   .post {
