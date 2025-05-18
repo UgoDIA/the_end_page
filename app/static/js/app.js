@@ -845,11 +845,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 shareLink.value = shareUrl;
                 shareModal.style.display = 'flex';
             } else {
-                alert('Erreur lors de la sauvegarde de la page');
+                console.log('Erreur lors de la sauvegarde de la page');
             }
         } catch (error) {
             console.error('Error saving page:', error);
-            alert('Erreur lors de la sauvegarde de la page');
+       
         }
     });
 
@@ -862,7 +862,7 @@ document.addEventListener('DOMContentLoaded', function () {
     copyLinkBtn.addEventListener('click', () => {
         shareLink.select();
         document.execCommand('copy');
-        alert('Lien copié dans le presse-papiers !');
+     
     });
 
     // Sauvegarder les données de la page
@@ -980,12 +980,7 @@ document.addEventListener('DOMContentLoaded', function () {
         document.body.classList.add(`${theme}-theme`);
     });
 
-    // Sauvegarder la page
-    saveBtn.addEventListener('click', () => {
-        const pageData = savePageData();
-        localStorage.setItem('saved_page', JSON.stringify(pageData));
-        alert('Page sauvegardée avec succès !');
-    });
+
 
     // Charger une page sauvegardée (si disponible)
     const savedPage = localStorage.getItem('saved_page');

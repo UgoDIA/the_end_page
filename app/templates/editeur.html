@@ -66,8 +66,8 @@
                             <!-- Suppression du titre et des blocs rapides -->
                         </div>
 
-                        <h3>Style</h3>
-                        <div class="style-options">
+                        {# <h3>Style</h3> #}
+                        {# <div class="style-options">
                             <div class="option-group">
                                 <label for="theme-select">Thème</label>
                                 <select id="theme-select">
@@ -91,7 +91,7 @@
                                     <option value="honest">Honnête</option>
                                 </select>
                             </div>
-                        </div>
+                        </div> #}
                     </div>
 
                     <div class="editor-canvas">
@@ -155,14 +155,15 @@
 
                 <div class="editor-actions">
 
-                    <button id="save-btn" class="btn-primary"><i class="fas fa-save"></i> Enregistrer</button>
-                    <button id="share-btn" class="btn-primary"><i class="fas fa-share-alt"></i> Partager</button>
+
+                    <button id="share-btn" class="btn-primary"><i class="fas fa-share-alt"></i> Enregistrer et
+                        Partager</button>
                     <button id="reset-btn" class="btn-danger"><i class="fas fa-trash"></i> Réinitialiser</button>
                 </div>
             </section>
 
             <!-- Assistant virtuel -->
-            <div class="virtual-assistant">
+            {# <div class="virtual-assistant">
                 <div class="assistant-header">
                     <div class="assistant-title">Assistant de création</div>
                     <button id="disable-assistant" class="assistant-btn disable-btn">
@@ -177,7 +178,7 @@
                         Suivant <i class="fas fa-arrow-right"></i>
                     </button>
                 </div>
-            </div>
+            </div> #}
 
         </main>
 

@@ -1,4 +1,4 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     // Éléments DOM
     const postsGrid = document.querySelector('.posts-grid');
     const loadMoreBtn = document.querySelector('.load-more-btn');
@@ -9,77 +9,96 @@ document.addEventListener('DOMContentLoaded', function() {
     // État
     let currentPage = 1;
     let isLoading = false;
-    let currentSort = 'trending';
+    let currentSort = 'trending';  // Default to trending (most liked)
     let currentTone = null;
-    let allPosts = [];
+    let hasMore = true;
 
-    // Propriétés de ton disponibles
-    const tones = ['classy', 'rage', 'cringe', 'touching'];
-    const subreddits = ['actualites', 'technologie', 'humour', 'science'];
-    const titles = [
-        "Un départ inoubliable !", "La technologie change tout", "Un moment de rage", "Une histoire touchante", "Cringe du jour", "Classe ultime", "Science et avenir", "Humour garanti", "Récit absurde", "Un adieu émouvant"
-    ];
-    const excerpts = [
-        "Voici un extrait de la page pour donner envie de cliquer…",
-        "Un résumé bref et accrocheur pour illustrer le contenu.",
-        "Découvrez pourquoi cette page fait le buzz !",
-        "Une anecdote qui ne laisse personne indifférent.",
-        "Un ton unique pour une page unique.",
-        "À lire absolument pour comprendre la tendance."
-    ];
-
-    // Générer des pages aléatoires
-    function generateRandomPosts(count = 30) {
-        const posts = [];
-        for (let i = 0; i < count; i++) {
-            const tone = tones[Math.floor(Math.random() * tones.length)];
-            const subreddit = subreddits[Math.floor(Math.random() * subreddits.length)];
-            const title = titles[Math.floor(Math.random() * titles.length)];
-            const excerpt = excerpts[Math.floor(Math.random() * excerpts.length)];
-            const likes = Math.floor(Math.random() * 300);
-            const hours = Math.floor(Math.random() * 24);
-            const isTrending = likes > 100 && hours <= 1;
-            posts.push({
-                id: i + 1,
-                username: `utilisateur${i + 1}`,
-                avatar: `https://api.dicebear.com/7.x/identicon/svg?seed=${i + 1}`,
-                subreddit,
-                title,
-                excerpt,
-                likes,
-                time: `${hours}h`,
-                isTrending,
-                tone
-            });
-        }
-        return posts;
+    // Get liked posts from localStorage
+    function getLikedPosts() {
+        const likedPosts = localStorage.getItem('likedPosts');
+        return likedPosts ? JSON.parse(likedPosts) : [];
     }
 
-    // Initialisation des posts
-    allPosts = generateRandomPosts(50);
+    // Save liked post to localStorage
+    function saveLikedPost(slug, isLiked) {
+        const likedPosts = getLikedPosts();
+        if (isLiked) {
+            if (!likedPosts.includes(slug)) {
+                likedPosts.push(slug);
+            }
+        } else {
+            const index = likedPosts.indexOf(slug);
+            if (index > -1) {
+                likedPosts.splice(index, 1);
+            }
+        }
+        localStorage.setItem('likedPosts', JSON.stringify(likedPosts));
+    }
+
+    // Check if a post is liked
+    function isPostLiked(slug) {
+        return getLikedPosts().includes(slug);
+    }
 
     // Gestion des likes
-    document.addEventListener('click', function(e) {
+    document.addEventListener('click', async function (e) {
         if (e.target.closest('.like-btn')) {
             const likeBtn = e.target.closest('.like-btn');
             const likeCount = likeBtn.querySelector('.like-count');
             const icon = likeBtn.querySelector('i');
-            const isLiked = likeBtn.classList.contains('liked');
-            // Optimistic UI
-            likeBtn.classList.toggle('liked');
-            likeBtn.setAttribute('aria-pressed', !isLiked);
-            icon.className = !isLiked ? 'fas fa-heart' : 'far fa-heart';
-            likeCount.textContent = parseInt(likeCount.textContent) + (isLiked ? -1 : 1);
-            likeBtn.style.animation = 'pop 0.2s';
-            setTimeout(() => { likeBtn.style.animation = ''; }, 200);
-            showToast(!isLiked ? '+1 like !' : '-1 like');
-            simulateLikeAPI(likeBtn.dataset.postId, !isLiked);
+            const pageSlug = likeBtn.dataset.pageSlug;
+            const isLiked = isPostLiked(pageSlug);
+
+            try {
+                // Optimistic UI update
+                likeBtn.classList.toggle('liked');
+                likeBtn.setAttribute('aria-pressed', !isLiked);
+                icon.className = !isLiked ? 'fas fa-heart' : 'far fa-heart';
+
+                // Make API call
+                const response = await fetch(`/api/page/${pageSlug}/like`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        action: isLiked ? 'unlike' : 'like'
+                    })
+                });
+
+                const data = await response.json();
+                console.log('Like API response:', data);
+
+                if (data.status === 'success') {
+                    // Update the like count with the actual value from the server
+                    likeCount.textContent = data.likes;
+                    likeBtn.style.animation = 'pop 0.2s';
+                    setTimeout(() => { likeBtn.style.animation = ''; }, 200);
+                    showToast(!isLiked ? '+1 like !' : '-1 like');
+
+                    // Save to localStorage
+                    saveLikedPost(pageSlug, !isLiked);
+                } else {
+                    // Revert the optimistic update if the API call failed
+                    likeBtn.classList.toggle('liked');
+                    likeBtn.setAttribute('aria-pressed', isLiked);
+                    icon.className = isLiked ? 'fas fa-heart' : 'far fa-heart';
+                    showToast(`Erreur: ${data.message || 'Erreur lors de la mise à jour du like'}`);
+                }
+            } catch (error) {
+                console.error('Error updating like:', error);
+                // Revert the optimistic update
+                likeBtn.classList.toggle('liked');
+                likeBtn.setAttribute('aria-pressed', isLiked);
+                icon.className = isLiked ? 'fas fa-heart' : 'far fa-heart';
+                showToast('Erreur de connexion au serveur');
+            }
         }
     });
 
     // Gestion du tri
     sortButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             sortButtons.forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             currentSort = this.dataset.sort;
@@ -89,7 +108,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Gestion des filtres de ton
     toneButtons.forEach(btn => {
-        btn.addEventListener('click', function() {
+        btn.addEventListener('click', function () {
             if (this.classList.contains('active')) {
                 this.classList.remove('active');
                 currentTone = null;
@@ -101,17 +120,6 @@ document.addEventListener('DOMContentLoaded', function() {
             refreshPosts();
         });
     });
-
-    // Chargement infini
-    let observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting && !isLoading) {
-                loadMorePosts();
-            }
-        });
-    });
-
-    observer.observe(loadMoreBtn);
 
     // Fonctions utilitaires
     function showToast(message) {
@@ -125,32 +133,63 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 1500);
     }
 
-    function simulateLikeAPI(postId, liked) {
-        setTimeout(() => {
-            // Simule l'appel réseau
-        }, 500);
-    }
-
     function refreshPosts() {
         currentPage = 1;
+        hasMore = true;
         postsGrid.innerHTML = '';
         loadMorePosts();
     }
 
-    function loadMorePosts() {
-        if (isLoading) return;
+    async function loadMorePosts() {
+        if (isLoading || !hasMore) return;
         isLoading = true;
 
         // Afficher le skeleton loader
         const skeleton = createSkeletonLoader();
         postsGrid.appendChild(skeleton);
 
-        setTimeout(() => {
-            skeleton.remove();
-            loadPosts(currentPage);
-            currentPage++;
+        try {
+            // Construire l'URL avec les paramètres
+            const params = new URLSearchParams({
+                page: currentPage,
+                sort: currentSort,
+                per_page: 8
+            });
+            if (currentTone) {
+                params.append('tone', currentTone);
+            }
+
+            const response = await fetch(`/api/feed?${params}`);
+            const data = await response.json();
+
+            if (data.status === 'success') {
+                skeleton.remove();
+
+                if (data.pages.length === 0) {
+                    hasMore = false;
+                    if (currentPage === 1) {
+                        postsGrid.innerHTML = '<div class="no-posts">Aucune page trouvée</div>';
+                    }
+                    return;
+                }
+
+                data.pages.forEach(page => {
+                    const postElement = createPostElement(page);
+                    postsGrid.appendChild(postElement);
+                });
+
+                hasMore = data.has_next;
+                currentPage++;
+            } else {
+                showToast('Erreur lors du chargement des pages');
+            }
+        } catch (error) {
+            console.error('Error loading posts:', error);
+            showToast('Erreur lors du chargement des pages');
+        } finally {
             isLoading = false;
-        }, 700);
+            skeleton.remove();
+        }
     }
 
     function createSkeletonLoader() {
@@ -169,58 +208,53 @@ document.addEventListener('DOMContentLoaded', function() {
         return skeleton;
     }
 
-    function loadPosts(page) {
-        // Pagination : 8 posts par page
-        let filtered = allPosts.slice();
-        if (currentTone) {
-            filtered = filtered.filter(post => post.tone === currentTone);
-        }
-        if (currentSort === 'trending') {
-            filtered = filtered.sort((a, b) => b.likes - a.likes);
-        } else if (currentSort === 'recent') {
-            // Trier par heure croissante (0h, 1h, ...)
-            filtered = filtered.sort((a, b) => parseInt(a.time) - parseInt(b.time));
-        } else if (currentSort === 'recommended') {
-            filtered = filtered.sort((a, b) => (b.isTrending ? 1 : 0) - (a.isTrending ? 1 : 0));
-        }
-        const start = (page - 1) * 8;
-        const end = start + 8;
-        const posts = filtered.slice(start, end);
-        posts.forEach(post => {
-            const postElement = createPostElement(post);
-            postsGrid.appendChild(postElement);
-        });
-    }
-
-    function createPostElement(post) {
+    function createPostElement(page) {
         const article = document.createElement('article');
         article.className = 'post-card';
-        // Heure sans double 'h'
-        const heure = post.time.toString().replace(/h+$/, '') + 'h';
-        // Actions bar (uniquement le bouton like)
-        const actionsBar = `
-            <div class="actions-bar">
-                <button class="action-icon like-btn" data-liked="false" data-post-id="${post.id}" aria-pressed="false">
-                    <i class="fa${post.liked ? 's' : 'r'} fa-heart"></i>
-                    <span class="like-count">${post.likes}</span>
-                    <span class="tooltip">J'aime</span>
-                </button>
-            </div>`;
+
+        // Format the date
+        const date = new Date(page.created_at);
+        const formattedDate = date.toLocaleString('fr-FR', {
+            day: '2-digit',
+            month: '2-digit',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+        });
+
+        // Check if the post is liked
+        const isLiked = isPostLiked(page.slug);
+
+        // Create the post card HTML
         article.innerHTML = `
             <div class="post-content">
-                <h3 class="post-title">${post.title}</h3>
-                <div class="post-meta">par <strong>${post.username}</strong> • r/${post.subreddit} • ${heure}</div>
-                <p class="post-excerpt">${post.excerpt}</p>
+                <h3 class="post-title">${page.title}</h3>
+                <div class="post-meta">Créé le ${formattedDate}</div>
             </div>
-            ${actionsBar}
+            <div class="actions-bar">
+                <button class="action-icon like-btn ${isLiked ? 'liked' : ''}" 
+                        data-liked="${isLiked}" 
+                        data-post-id="${page.id}" 
+                        data-page-slug="${page.slug}" 
+                        aria-pressed="${isLiked}">
+                    <i class="${isLiked ? 'fas' : 'far'} fa-heart"></i>
+                    <span class="like-count">${page.likes || 0}</span>
+                    <span class="tooltip">J'aime</span>
+                </button>
+            </div>
         `;
+
+        // Make the entire card clickable
+        article.addEventListener('click', (e) => {
+            // Don't navigate if clicking on the like button
+            if (!e.target.closest('.like-btn')) {
+                window.location.href = `/page/${page.slug}`;
+            }
+        });
+
         return article;
     }
 
-    function capitalizeTone(tone) {
-        return tone.charAt(0).toUpperCase() + tone.slice(1);
-    }
-
     // Initialisation
-    refreshPosts();
-}); 
+    refreshPosts();  // This will load trending posts by default
+});

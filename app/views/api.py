@@ -193,3 +193,137 @@ def get_page(slug):
         'status': 'success',
         'page': page.to_dict()
     })
+
+
+@api_bp.route('/feed', methods=['GET'])
+def get_feed():
+    try:
+        # Get query parameters
+        sort = request.args.get('sort', 'trending')
+        tone = request.args.get('tone')
+        page = int(request.args.get('page', 1))
+        per_page = int(request.args.get('per_page', 8))
+
+        # Base query
+        query = Page.query
+
+        # Apply tone filter if specified
+        if tone:
+            query = query.filter(Page.tone == tone)
+
+        # Apply sorting
+        if sort == 'trending':
+            # Sort by likes count (descending) and then by creation date
+            query = query.order_by(Page.likes.desc(), Page.created_at.desc())
+        elif sort == 'recent':
+            # Sort by creation date (most recent first)
+            query = query.order_by(Page.created_at.desc())
+
+        # Paginate results
+        pages = query.paginate(page=page, per_page=per_page, error_out=False)
+
+        # Format the response
+        pages_data = [{
+            'id': page.id,
+            'title': page.title,
+            'slug': page.slug,
+            'theme': page.theme,
+            'tone': page.tone,
+            'created_at': page.created_at.isoformat(),
+            'likes': page.likes or 0,
+            'elements': page.content.get('elements', []) if page.content else []
+        } for page in pages.items]
+
+        return jsonify({
+            'status': 'success',
+            'pages': pages_data,
+            'has_next': pages.has_next,
+            'total': pages.total
+        })
+
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500
+
+
+@api_bp.route('/page/<slug>/like', methods=['POST'])
+def toggle_like(slug):
+    try:
+        page = Page.query.filter_by(slug=slug).first()
+        if not page:
+            return jsonify({
+                'status': 'error',
+                'message': 'Page non trouvée'
+            }), 404
+
+        data = request.get_json()
+        if not data:
+            return jsonify({
+                'status': 'error',
+                'message': 'Données manquantes'
+            }), 400
+
+        action = data.get('action', 'toggle')
+        # Debug log
+        print(f"Processing like action: {action} for page: {slug}")
+
+        try:
+            # Initialize likes to 0 if it's None
+            if page.likes is None:
+                page.likes = 0
+
+            if action == 'like':
+                page.likes += 1
+            elif action == 'unlike':
+                page.likes = max(0, page.likes - 1)
+            else:  # toggle
+                page.likes = max(
+                    0, page.likes + (1 if page.likes == 0 else -1))
+
+            db.session.commit()
+            print(f"Updated likes count: {page.likes}")  # Debug log
+
+            return jsonify({
+                'status': 'success',
+                'message': 'Like mis à jour',
+                'likes': page.likes
+            })
+        except Exception as e:
+            db.session.rollback()
+            print(f"Database error: {str(e)}")  # Debug log
+            return jsonify({
+                'status': 'error',
+                'message': f'Erreur de base de données: {str(e)}'
+            }), 500
+
+    except Exception as e:
+        print(f"Unexpected error: {str(e)}")  # Debug log
+        return jsonify({
+            'status': 'error',
+            'message': f'Erreur inattendue: {str(e)}'
+        }), 500
+
+
+@api_bp.route('/stats', methods=['GET'])
+def get_stats():
+    try:
+        # Get total number of pages
+        total_pages = Page.query.count()
+
+        # Get total number of likes
+        total_likes = db.session.query(db.func.sum(Page.likes)).scalar() or 0
+
+        return jsonify({
+            'status': 'success',
+            'stats': {
+                'total_pages': total_pages,
+                'total_likes': total_likes
+            }
+        })
+    except Exception as e:
+        return jsonify({
+            'status': 'error',
+            'message': str(e)
+        }), 500

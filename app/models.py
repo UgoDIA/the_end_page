@@ -40,10 +40,11 @@ class Page(db.Model):
     slug = db.Column(db.String(255), unique=True, nullable=False)
     theme = db.Column(db.String(50), default='light')
     tone = db.Column(db.String(50), default='honest')
+    likes = db.Column(db.Integer, default=0)
 
     # Relationship with elements
     elements = db.relationship(
-        'Element', backref='page', lazy=True, order_by='Element.position')
+        'Element', backref='page', lazy=True, order_by='Element.position', cascade='all, delete-orphan')
 
     def __repr__(self):
         return f'<Page {self.title}>'
@@ -65,5 +66,6 @@ class Page(db.Model):
             'slug': self.slug,
             'theme': self.theme,
             'tone': self.tone,
+            'likes': self.likes or 0,
             'elements': elements
         }
