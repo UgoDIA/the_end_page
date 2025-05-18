@@ -849,7 +849,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         } catch (error) {
             console.error('Error saving page:', error);
-       
+
         }
     });
 
@@ -862,7 +862,7 @@ document.addEventListener('DOMContentLoaded', function () {
     copyLinkBtn.addEventListener('click', () => {
         shareLink.select();
         document.execCommand('copy');
-     
+
     });
 
     // Sauvegarder les données de la page
@@ -888,10 +888,10 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         return {
-            title: 'Ma page de départ',
+            title: document.querySelector('.page-title')?.textContent || 'Sans titre',
             slug: generateSlug(),
-            theme: document.getElementById('theme-select').value,
-            tone: document.getElementById('tone-select').value,
+            theme: document.body.dataset.theme || 'light',
+            tone: document.body.dataset.tone || 'honest',
             content: {
                 elements: elements
             }
@@ -905,62 +905,30 @@ document.addEventListener('DOMContentLoaded', function () {
         return `page-${timestamp}-${random}`;
     }
 
-    // Load page data from API
-    async function loadPage(slug) {
+    // Add save button event listener
+    saveBtn.addEventListener('click', async () => {
         try {
-            const response = await fetch(`/api/page/${slug}`);
+            const pageData = savePageData();
+            const response = await fetch('/api/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(pageData)
+            });
+
             const result = await response.json();
-
             if (result.status === 'success') {
-                const page = result.page;
-
-                // Apply theme and tone
-                document.body.className = '';
-                document.body.classList.add(`${page.theme}-theme`);
-                document.body.classList.add(`${page.tone}-tone`);
-
-                // Clear existing elements
-                canvas.innerHTML = '';
-
-                // Load elements
-                if (page.elements && page.elements.length > 0) {
-                    page.elements.forEach(element => {
-                        createElementFromData(element);
-                    });
-                }
+                showToast('Page sauvegardée avec succès !');
+                playSound('save');
             } else {
-                console.error('Error loading page:', result.message);
+                showToast('Erreur lors de la sauvegarde de la page');
             }
         } catch (error) {
-            console.error('Error loading page:', error);
+            console.error('Error saving page:', error);
+            showToast('Erreur lors de la sauvegarde de la page');
         }
-    }
-
-    // Create element from saved data
-    function createElementFromData(elementData) {
-        const element = document.createElement('div');
-        element.className = 'canvas-element';
-        element.dataset.type = elementData.type;
-
-        // Apply content
-        element.innerHTML = elementData.content.html;
-
-        // Apply styles
-        const style = elementData.content.style;
-        Object.assign(element.style, style);
-
-        // Add to canvas
-        canvas.appendChild(element);
-
-        // Make element draggable
-        makeElementDraggable(element);
-
-        // Add click handler for properties
-        element.addEventListener('click', (e) => {
-            e.stopPropagation();
-            selectElement(element);
-        });
-    }
+    });
 
     // Check if we're on a shared page
     document.addEventListener('DOMContentLoaded', function () {
