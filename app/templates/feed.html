@@ -6,77 +6,76 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>PageDépart – Actualités</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/feed.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   </head>
 
   <body>
-    <header>
+    <header class="sticky-header">
       <nav>
-        <a href="{{ url_for('main.index') }}" class="active">Accueil</a>
+        <a href="{{ url_for('main.index') }}">Accueil</a>
         <a href="{{ url_for('main.editeur') }}">Éditeur</a>
+        <a href="{{ url_for('main.feed') }}" class="active">Feed</a>
       </nav>
       <div class="logo">
         <img src="{{ url_for('static', filename='Logo.png') }}" alt="Logo de TheEnd.page">
         <h1>TheEnd.page</h1>
       </div>
+      <button class="create-btn"><i class="fas fa-plus"></i> Créer ma page</button>
     </header>
 
     <main class="feed">
-      <!-- Exemple de post -->
-      <article class="post">
-        <div class="votes">
-          <button class="up"><i class="fas fa-chevron-up"></i></button>
-          <span class="count">128</span>
-          <button class="down"><i class="fas fa-chevron-down"></i></button>
-        </div>
-        <div class="content">
-          <h2 class="title">Titre de l'actualité n°1</h2>
-          <p class="meta">par <strong>utilisateur1</strong> dans <em>r/actualites</em> · 2 h</p>
-          <p class="excerpt">Voici un petit extrait de l'article ou de la publication pour donner envie de cliquer…</p>
-        </div>
-      </article>
+      <!-- Indicateurs sociaux -->
+      <div class="social-stats">
+        <span class="stat"><i class="fas fa-file-alt"></i> 1234 pages créées</span>
+        <span class="stat"><i class="fas fa-heart"></i> 8765 likes totaux</span>
+      </div>
 
-      <!-- Dupliquez <article class="post"> pour chaque actualité -->
-      <article class="post">
-        <div class="votes">
-          <button class="up"><i class="fas fa-chevron-up"></i></button>
-          <span class="count">47</span>
-          <button class="down"><i class="fas fa-chevron-down"></i></button>
+      <!-- Filtres sticky -->
+      <div class="filters-bar">
+        <div class="sort-options">
+          <button class="pill-btn active" data-sort="trending">Les plus likées</button>
+          <button class="pill-btn" data-sort="recent">Les plus récentes</button>
+          <button class="pill-btn" data-sort="recommended">Recommandées</button>
         </div>
-        <div class="content">
-          <h2 class="title">Deuxième titre d'actualité</h2>
-          <p class="meta">par <strong>utilisateur2</strong> dans <em>r/technologie</em> · 5 h</p>
-          <p class="excerpt">Un autre bref résumé pour illustrer le contenu du post…</p>
-        </div>
-      </article>
+      </div>
 
-      <!-- … -->
+      <!-- Grille de posts -->
+      <div class="posts-grid">
+        <!-- Les posts seront générés dynamiquement par feed.js -->
+      </div>
+
+      <!-- Bouton "Charger plus" -->
+      <div class="load-more">
+        <button class="load-more-btn">
+          <span class="btn-text">Charger plus</span>
+          <div class="loader">
+            <div class="particle"></div>
+            <div class="particle"></div>
+            <div class="particle"></div>
+          </div>
+        </button>
+      </div>
     </main>
 
-    <footer>
+    <footer class="minimal-footer">
       <div class="footer-content">
-        <p>&copy; 2025 TheEnd.page. Tous droits réservés.</p>
+        <div>
+          <p>&copy; 2025 TheEnd.page. Tous droits réservés.</p>
+          <div class="footer-links">
+            <a href="#">Mentions légales</a>
+            <a href="#">Confidentialité</a>
+            <a href="#">Contact</a>
+          </div>
+        </div>
+        <a href="{{ url_for('main.editeur') }}" class="footer-cta">Créer ma page</a>
       </div>
     </footer>
 
-    <!-- Modal de partage -->
-    <div class="modal" id="share-modal">
-      <div class="modal-content">
-        <span class="close-modal">&times;</span>
-        <h3>Partagez votre page</h3>
-        <p>Utilisez ce lien pour partager votre page de départ :</p>
-        <div class="share-link-container">
-          <input type="text" id="share-link" readonly>
-          <button id="copy-link-btn"><i class="fas fa-copy"></i></button>
-        </div>
-        <div class="social-share">
-          <button class="social-btn facebook"><i class="fab fa-facebook-f"></i></button>
-          <button class="social-btn twitter"><i class="fab fa-twitter"></i></button>
-          <button class="social-btn whatsapp"><i class="fab fa-whatsapp"></i></button>
-        </div>
-      </div>
-    </div>
-    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    <!-- Toast notifications -->
+    <div class="toast-container"></div>
+
+    <script src="{{ url_for('static', filename='js/feed.js') }}"></script>
   </body>
 
 </html>
