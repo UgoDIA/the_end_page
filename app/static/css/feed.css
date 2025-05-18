@@ -535,3 +535,83 @@
         top: 56px;
     }
 } 
+
+
+
+/* Logo responsive */
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 100%;
+}
+
+.logo img {
+    height: 60px;
+    width: auto;
+    max-width: 100%;
+    transition: height 0.3s;
+}
+
+.logo h1 {
+    font-size: 1.8rem;
+    margin: 0;
+    word-break: break-word;
+    max-width: 100%;
+    transition: font-size 0.3s;
+}
+
+/* Responsive pour tablettes */
+@media (max-width: 768px) {
+    .logo {
+        justify-content: center;
+    }
+    .logo img {
+        height: 40px;
+    }
+    .logo h1 {
+        font-size: 1.2rem;
+        text-align: center;
+    }
+}
+
+/* Responsive pour mobiles */
+@media (max-width: 480px) {
+    .logo {
+        flex-direction: column;
+        gap: 4px;
+    }
+    .logo img {
+        height: 32px;
+    }
+    .logo h1 {
+        font-size: 1rem;
+    }
+}
+
+
+/* Pied de page */
+footer {
+    flex-shrink: 0;
+    background-color: #000000;
+    color: #fff;
+    text-align: center;
+    padding: 1rem;
+}
+
+  /* Logo */
+  .logo {
+    max-width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+}
+
+.logo h1 {
+    color: #3498db;
+    font-size: 1.8rem;
+    font-family: 'Tagesschrift', cursive;
+    transition: font-size 0.3s;
+    word-break: break-word;
+    max-width: 100%;
+}
